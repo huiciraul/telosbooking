@@ -4,7 +4,9 @@
     {
       "parameters": {
         "path": "buscar-tipos",
-        "options": {}
+        "options": {
+          "httpMethod": "POST"
+        }
       },
       "id": "ea95f9c7-1563-4d59-9cca-312d04101ded",
       "name": "Webhook",
@@ -69,7 +71,8 @@
             "response": {
               "neverError": true
             }
-          }
+          },
+          "httpMethod": "POST"
         }
       },
       "id": "7a4f1691-1457-4944-851b-6ad7d082825c",

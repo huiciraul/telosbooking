@@ -31,7 +31,8 @@ export async function executeQuery<T = any>(query: string, params: any[] = []): 
     console.log(`🔍 Ejecutando consulta: ${query.slice(0, 100)}...`)
     const startTime = Date.now()
 
-    const result = await sqlClient(query, params)
+    // CORRECCIÓN: Usar sqlClient.query() para consultas parametrizadas
+    const result = await sqlClient.query(query, params)
 
     const duration = Date.now() - startTime
     console.log(`✅ Consulta completada en ${duration}ms`)
@@ -60,7 +61,8 @@ export async function checkDatabaseConnection(): Promise<boolean> {
     return false
   }
   try {
-    await sqlClient("SELECT 1")
+    // CORRECCIÓN: Usar sqlClient.query() para la verificación
+    await sqlClient.query("SELECT 1")
     return true
   } catch (error) {
     console.error("❌ Error verificando conexión:", error)
