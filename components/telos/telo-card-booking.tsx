@@ -13,7 +13,7 @@ interface TeloCardProps {
     precio: number
     rating: number
     servicios: string[]
-    imagen?: string
+    imagen_url?: string // Cambiado de imagen a imagen_url
     disponible?: boolean
   }
 }
@@ -30,8 +30,12 @@ export function TeloCardBooking({ telo }: TeloCardProps) {
       <Card className="overflow-hidden hover:shadow-lg transition-shadow border border-gray-200">
         {/* Image */}
         <div className="aspect-[4/3] relative">
-          {telo.imagen ? (
-            <img src={telo.imagen || "/placeholder.svg"} alt={telo.nombre} className="w-full h-full object-cover" />
+          {telo.imagen_url ? ( // Cambiado de telo.imagen a telo.imagen_url
+            <img
+              src={telo.imagen_url || "/placeholder.svg?height=300&width=400&query=hotel exterior"}
+              alt={telo.nombre}
+              className="w-full h-full object-cover"
+            />
           ) : (
             <div className="w-full h-full bg-gray-200 flex items-center justify-center">
               <MapPin className="w-12 h-12 text-gray-400" />

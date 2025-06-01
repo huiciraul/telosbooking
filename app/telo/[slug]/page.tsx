@@ -67,7 +67,7 @@ export default async function TeloPage({ params }: PageProps) {
                 <div className="h-64 bg-gray-200 rounded-t-lg">
                   {telo.imagen_url ? (
                     <img
-                      src={telo.imagen_url || "/placeholder.svg"}
+                      src={telo.imagen_url || "/placeholder.svg?height=256&width=512&query=hotel exterior"} // Actualizado placeholder
                       alt={telo.nombre}
                       className="object-cover w-full h-full rounded-t-lg"
                     />

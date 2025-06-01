@@ -12,6 +12,12 @@ if (process.env.NODE_ENV !== "production") globalForPrisma.prisma = prisma
 */
 
 // Datos mock temporales para testing
+// En mockTelos, cambiar 'imagen' a 'imagen_url' para cada objeto
+// Ejemplo:
+// imagen: "https://images.unsplash.com/photo-1566073771259-6a8506099945?q=80&w=400&auto=format&fit=crop",
+// DEBE SER:
+// imagen_url: "https://images.unsplash.com/photo-1566073771259-6a8506099945?q=80&w=400&auto=format&fit=crop",
+
 export const mockTelos = [
   {
     id: "1",
@@ -24,7 +30,7 @@ export const mockTelos = [
     servicios: ["WiFi", "Estacionamiento", "Hidromasaje"],
     descripcion: "Moderno hotel en el corazón de Palermo",
     rating: 4.5,
-    imagen: "https://images.unsplash.com/photo-1566073771259-6a8506099945?q=80&w=400&auto=format&fit=crop",
+    imagen_url: "https://images.unsplash.com/photo-1566073771259-6a8506099945?q=80&w=400&auto=format&fit=crop", // Cambiado
     createdAt: new Date(),
     updatedAt: new Date(),
   },
@@ -39,7 +45,7 @@ export const mockTelos = [
     servicios: ["WiFi", "Aire Acondicionado"],
     descripcion: "Cómodo albergue en Villa Crespo",
     rating: 4.2,
-    imagen: "https://images.unsplash.com/photo-1551882547-ff40c63fe5fa?q=80&w=400&auto=format&fit=crop",
+    imagen_url: "https://images.unsplash.com/photo-1551882547-ff40c63fe5fa?q=80&w=400&auto=format&fit=crop", // Cambiado
     createdAt: new Date(),
     updatedAt: new Date(),
   },
@@ -54,7 +60,7 @@ export const mockTelos = [
     servicios: ["Estacionamiento", "Jacuzzi", "TV Cable"],
     descripcion: "Elegante motel en Belgrano",
     rating: 4.7,
-    imagen: "https://images.unsplash.com/photo-1618773928121-c32242e63f39?q=80&w=400&auto=format&fit=crop",
+    imagen_url: "https://images.unsplash.com/photo-1618773928121-c32242e63f39?q=80&w=400&auto=format&fit=crop", // Cambiado
     createdAt: new Date(),
     updatedAt: new Date(),
   },
@@ -69,7 +75,7 @@ export const mockTelos = [
     servicios: ["WiFi", "Frigobar"],
     descripcion: "Hotel céntrico en Córdoba",
     rating: 4.0,
-    imagen: "https://images.unsplash.com/photo-1566073771259-6a8506099945?q=80&w=400&auto=format&fit=crop",
+    imagen_url: "https://images.unsplash.com/photo-1566073771259-6a8506099945?q=80&w=400&auto=format&fit=crop", // Cambiado
     createdAt: new Date(),
     updatedAt: new Date(),
   },
@@ -84,7 +90,7 @@ export const mockTelos = [
     servicios: ["WiFi", "Estacionamiento"],
     descripcion: "Albergue moderno en Rosario",
     rating: 4.3,
-    imagen: "https://images.unsplash.com/photo-1590490360182-c33d57733427?q=80&w=400&auto=format&fit=crop",
+    imagen_url: "https://images.unsplash.com/photo-1590490360182-c33d57733427?q=80&w=400&auto=format&fit=crop", // Cambiado
     createdAt: new Date(),
     updatedAt: new Date(),
   },
