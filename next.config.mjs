@@ -7,8 +7,22 @@ const nextConfig = {
     ignoreBuildErrors: true,
   },
   images: {
+    domains: ['images.unsplash.com', 'blob.v0.dev'],
+    remotePatterns: [
+      {
+        protocol: 'https',
+        hostname: 'images.unsplash.com',
+      },
+      {
+        protocol: 'https',
+        hostname: 'blob.v0.dev',
+      }
+    ],
     unoptimized: true,
   },
+  experimental: {
+    serverComponentsExternalPackages: ['@neondatabase/serverless']
+  }
 }
 
 export default nextConfig

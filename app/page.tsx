@@ -1,11 +1,11 @@
 import { ResponsiveHeader } from "@/components/layout/responsive-header"
 import { HeroSearch } from "@/components/search/hero-search"
 import { QuickFilters } from "@/components/search/quick-filters"
-import { PopularTelos } from "@/components/sections/popular-telos"
 import { FeaturesSection } from "@/components/sections/features-section"
 import { PopularDestinations } from "@/components/sections/popular-destinations"
 import { Footer } from "@/components/layout/footer"
 import { FloatingActions } from "@/components/ui/floating-actions"
+import { PopularTelosWrapper } from "@/components/sections/popular-telos-wrapper"
 
 export default function HomePage() {
   return (
@@ -15,7 +15,7 @@ export default function HomePage() {
       <main>
         <HeroSearch />
         <QuickFilters />
-        <PopularTelos />
+        <PopularTelosWrapper />
         <FeaturesSection />
         <PopularDestinations />
       </main>

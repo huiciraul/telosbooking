@@ -42,6 +42,44 @@ export function PopularTelos() {
     } catch (error) {
       console.error("❌ Error fetching telos:", error)
       setError("Error cargando telos desde la base de datos")
+
+      // Fallback a datos mock en caso de error
+      const mockData = [
+        {
+          id: "1",
+          nombre: "Hotel Palermo Premium",
+          slug: "hotel-palermo-premium",
+          direccion: "Av. Santa Fe 3000",
+          ciudad: "Buenos Aires",
+          precio: 3500,
+          rating: 4.5,
+          servicios: ["WiFi", "Estacionamiento", "Hidromasaje"],
+          imagen_url: "https://images.unsplash.com/photo-1566073771259-6a8506099945?q=80&w=400&auto=format&fit=crop",
+        },
+        {
+          id: "2",
+          nombre: "Albergue Villa Crespo",
+          slug: "albergue-villa-crespo",
+          direccion: "Corrientes 4500",
+          ciudad: "Buenos Aires",
+          precio: 2800,
+          rating: 4.2,
+          servicios: ["WiFi", "Aire Acondicionado"],
+          imagen_url: "https://images.unsplash.com/photo-1551882547-ff40c63fe5fa?q=80&w=400&auto=format&fit=crop",
+        },
+        {
+          id: "3",
+          nombre: "Motel Belgrano Deluxe",
+          slug: "motel-belgrano-deluxe",
+          direccion: "Cabildo 2200",
+          ciudad: "Buenos Aires",
+          precio: 4200,
+          rating: 4.7,
+          servicios: ["Estacionamiento", "Jacuzzi", "TV Cable"],
+          imagen_url: "https://images.unsplash.com/photo-1618773928121-c32242e63f39?q=80&w=400&auto=format&fit=crop",
+        },
+      ]
+      setTelos(mockData)
     } finally {
       setLoading(false)
     }
@@ -119,3 +157,6 @@ export function PopularTelos() {
     </section>
   )
 }
+
+// Exportación por defecto para dynamic import
+export default PopularTelos
