@@ -157,12 +157,12 @@ export async function POST(request: NextRequest) {
       results,
       timestamp: new Date().toISOString(),
     })
-  } catch (error) {
+  } catch (error: any) {
     console.error("❌ Error en webhook n8n:", error)
     return NextResponse.json(
       {
         error: "Error interno del servidor",
-        details: error instanceof Error ? error.message : "Error desconocido",
+        details: error instanceof Error ? error.message : String(error),
       },
       { status: 500 },
     )
@@ -202,12 +202,12 @@ export async function GET() {
         rate_limiting: true,
       },
     })
-  } catch (error) {
+  } catch (error: any) {
     console.error("❌ Error obteniendo stats del webhook:", error)
     return NextResponse.json(
       {
         error: "Error interno del servidor",
-        details: error instanceof Error ? error.message : "Error desconocido",
+        details: error instanceof Error ? error.message : String(error),
       },
       { status: 500 },
     )

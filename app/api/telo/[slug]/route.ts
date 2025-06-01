@@ -21,8 +21,11 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
     }
 
     return NextResponse.json(telo)
-  } catch (error) {
+  } catch (error: any) {
     console.error("Error fetching telo:", error)
-    return NextResponse.json({ error: "Error interno del servidor" }, { status: 500 })
+    return NextResponse.json(
+      { error: "Error interno del servidor", details: error instanceof Error ? error.message : String(error) },
+      { status: 500 },
+    )
   }
 }

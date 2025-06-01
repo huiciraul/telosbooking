@@ -28,27 +28,31 @@ export async function GET() {
   }
 
   try {
-    // Verificar conexión a la base de datos
     diagnostico.database.connected = await checkDatabaseConnection()
 
     if (diagnostico.database.connected) {
       try {
-        // Contar registros en las tablas
-        const [ciudadesCount] = await executeQuery("SELECT COUNT(*) as count FROM ciudades")
-        const [telosCount] = await executeQuery("SELECT COUNT(*) as count FROM telos WHERE activo = true")
+        const ciudadesCountResult = await executeQuery<{ count: string }>("SELECT COUNT(*) as count FROM ciudades")
+        const telosCountResult = await executeQuery<{ count: string }>(
+          "SELECT COUNT(*) as count FROM telos WHERE activo = true",
+        )
 
-        diagnostico.database.tables.ciudades = ciudadesCount.count
-        diagnostico.database.tables.telos = telosCount.count
-      } catch (error) {
-        diagnostico.database.error = error instanceof Error ? error.message : "Error desconocido contando registros"
+        diagnostico.database.tables.ciudades = Number.parseInt(ciudadesCountResult[0]?.count || "0", 10)
+        diagnostico.database.tables.telos = Number.parseInt(telosCountResult[0]?.count || "0", 10)
+      } catch (error: any) {
+        diagnostico.database.error = error instanceof Error ? error.message : String(error)
+        console.error("❌ Error counting records in diagnostico:", error)
       }
     } else {
-      diagnostico.database.error = "No se pudo conectar a la base de datos"
+      if (!diagnostico.database.error) {
+        diagnostico.database.error =
+          "No se pudo conectar a la base de datos. Verifique DATABASE_URL y el estado de su instancia Neon."
+      }
     }
-  } catch (error) {
-    console.error("❌ Error en diagnóstico de BD:", error)
+  } catch (error: any) {
+    console.error("❌ Error general en diagnóstico de BD:", error)
     diagnostico.database.connected = false
-    diagnostico.database.error = error instanceof Error ? error.message : "Error desconocido"
+    diagnostico.database.error = error instanceof Error ? error.message : String(error)
   }
 
   return NextResponse.json(diagnostico)

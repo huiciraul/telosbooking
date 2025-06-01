@@ -12,8 +12,11 @@ export async function GET(request: NextRequest) {
     const ciudades = await executeQuery<Ciudad[]>(query)
 
     return NextResponse.json(ciudades)
-  } catch (error) {
+  } catch (error: any) {
     console.error("Error fetching ciudades:", error)
-    return NextResponse.json({ error: "Error interno del servidor" }, { status: 500 })
+    return NextResponse.json(
+      { error: "Error interno del servidor", details: error instanceof Error ? error.message : String(error) },
+      { status: 500 },
+    )
   }
 }
