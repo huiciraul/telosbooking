@@ -93,3 +93,100 @@ export interface Favorito {
   telo_id: string // Cambiado a string para coincidir con el id de Telo
   created_at?: Date
 }
+
+// Mock data para fallback
+export const mockTelos = [
+  {
+    id: "1",
+    nombre: "Hotel Palermo Premium",
+    slug: "hotel-palermo-premium",
+    direccion: "Av. Santa Fe 3000",
+    ciudad: "Buenos Aires",
+    precio: 3500,
+    telefono: "011-4555-1234",
+    servicios: ["WiFi", "Estacionamiento", "Hidromasaje"],
+    descripcion:
+      "Hotel Palermo Premium es un albergue transitorio de lujo ubicado en el corazón de Palermo, Buenos Aires. Este telo premium ofrece habitaciones por horas con hidromasaje, WiFi gratuito y estacionamiento privado. Ideal para parejas que buscan un albergue temporario con máxima comodidad y discreción en una de las zonas más exclusivas de la ciudad.",
+    rating: 4.5,
+    imagen_url: "https://images.unsplash.com/photo-1566073771259-6a8506099945?q=80&w=400&auto=format&fit=crop",
+    lat: -34.5859,
+    lng: -58.4074,
+    activo: true,
+    verificado: true,
+    fuente: "manual",
+    fecha_scraping: new Date().toISOString(),
+    created_at: new Date().toISOString(),
+    updated_at: new Date().toISOString(),
+  },
+  {
+    id: "2",
+    nombre: "Albergue Villa Crespo",
+    slug: "albergue-villa-crespo",
+    direccion: "Corrientes 4500",
+    ciudad: "Buenos Aires",
+    precio: 2800,
+    telefono: "011-4777-5678",
+    servicios: ["WiFi", "Aire Acondicionado"],
+    descripcion:
+      "Albergue Villa Crespo es un telo moderno y accesible en el vibrante barrio de Villa Crespo. Este albergue transitorio cuenta con aire acondicionado y WiFi gratuito, perfecto para parejas que buscan un albergue temporario cómodo y bien ubicado. Excelente relación calidad-precio en uno de los barrios más dinámicos de Buenos Aires.",
+    rating: 4.2,
+    imagen_url: "https://images.unsplash.com/photo-1551882547-ff40c63fe5fa?q=80&w=400&auto=format&fit=crop",
+    lat: -34.597,
+    lng: -58.433,
+    activo: true,
+    verificado: true,
+    fuente: "manual",
+    fecha_scraping: new Date().toISOString(),
+    created_at: new Date().toISOString(),
+    updated_at: new Date().toISOString(),
+  },
+  {
+    id: "3",
+    nombre: "Motel Belgrano Deluxe",
+    slug: "motel-belgrano-deluxe",
+    direccion: "Cabildo 2200",
+    ciudad: "Buenos Aires",
+    precio: 4200,
+    telefono: "011-4888-9012",
+    servicios: ["Estacionamiento", "Jacuzzi", "TV Cable"],
+    descripcion:
+      "Motel Belgrano Deluxe es un elegante albergue transitorio ubicado en el exclusivo barrio de Belgrano. Cuenta con jacuzzi privado, estacionamiento seguro y TV por cable. Perfecto para parejas que buscan una experiencia de lujo en un ambiente discreto y sofisticado.",
+    rating: 4.7,
+    imagen_url: "https://images.unsplash.com/photo-1618773928121-c32242e63f39?q=80&w=400&auto=format&fit=crop",
+    lat: -34.5627,
+    lng: -58.4583,
+    activo: true,
+    verificado: true,
+    fuente: "manual",
+    fecha_scraping: new Date().toISOString(),
+    created_at: new Date().toISOString(),
+    updated_at: new Date().toISOString(),
+  },
+]
+
+export const mockCiudades = [
+  {
+    id: "1",
+    nombre: "Buenos Aires",
+    slug: "buenos-aires",
+    provincia: "Buenos Aires",
+    busquedas: 150,
+    total_telos: 45,
+  },
+  {
+    id: "2",
+    nombre: "Córdoba",
+    slug: "cordoba",
+    provincia: "Córdoba",
+    busquedas: 89,
+    total_telos: 23,
+  },
+  {
+    id: "3",
+    nombre: "Rosario",
+    slug: "rosario",
+    provincia: "Santa Fe",
+    busquedas: 67,
+    total_telos: 18,
+  },
+]
