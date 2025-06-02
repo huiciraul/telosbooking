@@ -1,8 +1,8 @@
 import { type NextRequest, NextResponse } from "next/server"
 import { z } from "zod"
-import { executeQuery } from "@/lib/db" // Asegúrate de que esta importación exista
-import { n8nTeloSchema } from "@/lib/validators/telo-schema" // Asegúrate de que esta importación exista
-import { generateSlug } from "@/utils/generate-slug" // Asegúrate de que esta importación exista
+import { executeQuery } from "@/lib/db"
+import { n8nTeloSchema } from "@/lib/validators/telo-schema"
+import { generateSlug } from "@/utils/generate-slug"
 
 const searchSchema = z.object({
   ciudad: z.string().min(1),
@@ -15,23 +15,18 @@ export async function POST(request: NextRequest) {
 
     console.log(`🔍 Iniciando búsqueda y persistencia para: ${ciudad}`)
 
-    // URL del webhook de n8n (configurable via env)
-    // Asegúrate de que esta URL sea la que tu workflow de n8n expone para ser "pull-eada"
     const n8nWebhookUrl = "https://huiciraul.app.n8n.cloud/webhook/buscar-tipos"
-    // Si n8n requiere un token para esta URL, configúralo aquí
     const n8nWebhookToken = process.env.N8N_WEBHOOK_TOKEN
 
-    const payload = { ciudad }
-
-    console.log("📤 Enviando payload a n8n webhook (para obtener datos):", payload)
+    console.log("📤 Realizando solicitud POST a n8n webhook (para activar y obtener datos):", { ciudad })
 
     const n8nResponse = await fetch(n8nWebhookUrl, {
-      method: "POST", // O GET si tu n8n está configurado para GET
+      method: "POST",
       headers: {
         "Content-Type": "application/json",
         ...(n8nWebhookToken ? { Authorization: `Bearer ${n8nWebhookToken}` } : {}),
       },
-      body: JSON.stringify(payload),
+      body: JSON.stringify({ ciudad }),
     })
 
     if (!n8nResponse.ok) {
@@ -42,7 +37,7 @@ export async function POST(request: NextRequest) {
 
     const rawTelosData = await n8nResponse.json()
     console.log(`📥 Recibidos ${rawTelosData.length} telos de n8n webhook. Iniciando persistencia...`)
-    console.log("Raw telos data from n8n:", JSON.stringify(rawTelosData, null, 2)) // Log raw data
+    console.log("Raw telos data from n8n:", JSON.stringify(rawTelosData, null, 2))
 
     const persistedTelos = []
     const results = {
@@ -57,10 +52,23 @@ export async function POST(request: NextRequest) {
         // Limpiar y normalizar datos antes de validar
         const cleanedData = {
           ...teloData,
-          ciudad: teloData.ciudad?.replace(/^W\d+\s+/, "") || teloData.ciudad,
-          precio: teloData.precio ?? Math.floor(Math.random() * 3000) + 2000,
-          servicios: teloData.servicios?.length > 0 ? teloData.servicios : ["WiFi", "Estacionamiento"],
-          slug: undefined, // Asegurar que el slug se genere por nuestra función
+          // Asegurar que ciudad no tenga prefijos y tenga un valor por defecto
+          ciudad: teloData.ciudad?.replace(/^W\d+\s+/, "") || ciudad,
+          // Asegurar que precio sea un número, asignando un valor por defecto si es null/undefined
+          precio: teloData.precio != null ? Number(teloData.precio) : Math.floor(Math.random() * 3000) + 2000,
+          // Asegurar que servicios sea un array, asignando valores por defecto si está vacío
+          servicios:
+            Array.isArray(teloData.servicios) && teloData.servicios.length > 0
+              ? teloData.servicios
+              : ["WiFi", "Estacionamiento"],
+          // Convertir cadena vacía a null para telefono
+          telefono: teloData.telefono === "" ? null : teloData.telefono,
+          // Asegurar que rating sea un número, asignando un valor por defecto si es null/undefined
+          rating: teloData.rating != null ? Number(teloData.rating) : Number((Math.random() * 2 + 3).toFixed(1)),
+          // Convertir cadena vacía a null para imagen_url
+          imagen_url: teloData.imagen_url === "" ? null : teloData.imagen_url,
+          // El slug se generará por nuestra función, así que lo ignoramos del input
+          slug: undefined,
         }
 
         const validatedTelo = n8nTeloSchema.parse(cleanedData)
@@ -144,7 +152,7 @@ export async function POST(request: NextRequest) {
             validatedTelo.imagen_url || null,
             validatedTelo.lat || null,
             validatedTelo.lng || null,
-            validatedTelo.fuente || "n8n-search", // Fuente para este endpoint
+            validatedTelo.fuente || "n8n-search",
             validatedTelo.fecha_scraping
               ? new Date(validatedTelo.fecha_scraping).toISOString()
               : new Date().toISOString(),
@@ -160,7 +168,7 @@ export async function POST(request: NextRequest) {
         }
       } catch (validationError) {
         results.errores++
-        console.error(`❌ Error procesando telo ${index + 1}:`, validationError) // Log de errores de validación
+        console.error(`❌ Error procesando telo ${index + 1}:`, validationError)
       }
     }
 
@@ -170,7 +178,7 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({
       success: true,
-      telos: persistedTelos, // Devolver los telos ya persistidos con sus slugs correctos
+      telos: persistedTelos,
       total: persistedTelos.length,
       fuente: "n8n-persisted",
       timestamp: new Date().toISOString(),
