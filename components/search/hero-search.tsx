@@ -4,7 +4,7 @@ import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { MapPin, Search, Navigation, Cloud } from "lucide-react"
+import { MapPin, Search, Navigation } from "lucide-react"
 
 interface Ciudad {
   id: number
@@ -53,14 +53,17 @@ export function HeroSearch() {
         body: JSON.stringify({ nombre: location.trim() }),
       })
 
-      // Activar búsqueda en n8n en paralelo (no esperar respuesta)
-      fetch("/api/n8n/search", {
+      // Iniciar scraping si es necesario
+      await fetch("/api/scraping/google-maps", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ ciudad: location.trim() }),
-      }).catch((error) => console.log("n8n search error (non-blocking):", error))
+        body: JSON.stringify({
+          query: "telos albergues transitorios",
+          location: location.trim(),
+        }),
+      })
 
-      // Navegar a resultados inmediatamente
+      // Navegar a resultados
       const citySlug = location.toLowerCase().replace(/\s+/g, "-")
       router.push(`/telos-en/${citySlug}`)
     } catch (error) {
@@ -139,7 +142,6 @@ export function HeroSearch() {
                 >
                   <Search className="w-4 h-4 text-purple-400" />
                   <span>Buscar "{location}"</span>
-                  <Cloud className="w-4 h-4 text-blue-400 ml-auto" />
                 </button>
               )}
 
@@ -191,12 +193,6 @@ export function HeroSearch() {
             </>
           )}
         </Button>
-
-        {/* Info */}
-        <p className="text-xs text-gray-500 mt-4 flex items-center justify-center space-x-1">
-          <Cloud className="w-3 h-3" />
-          <span>Búsqueda en tiempo real con n8n</span>
-        </p>
       </div>
     </section>
   )
