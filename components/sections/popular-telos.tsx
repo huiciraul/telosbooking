@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button"
 import { RefreshCw, CheckCircle, AlertTriangle } from "lucide-react"
 
 interface Telo {
-  id: string
+  id: number // Cambiado a number
   nombre: string
   slug: string
   direccion: string
@@ -46,7 +46,7 @@ export function PopularTelos() {
       // Fallback a datos mock en caso de error
       const mockData = [
         {
-          id: "1",
+          id: 1, // Cambiado a number
           nombre: "Hotel Palermo Premium",
           slug: "hotel-palermo-premium",
           direccion: "Av. Santa Fe 3000",
@@ -57,7 +57,7 @@ export function PopularTelos() {
           imagen_url: "https://images.unsplash.com/photo-1566073771259-6a8506099945?q=80&w=400&auto=format&fit=crop",
         },
         {
-          id: "2",
+          id: 2, // Cambiado a number
           nombre: "Albergue Villa Crespo",
           slug: "albergue-villa-crespo",
           direccion: "Corrientes 4500",
@@ -68,7 +68,7 @@ export function PopularTelos() {
           imagen_url: "https://images.unsplash.com/photo-1551882547-ff40c63fe5fa?q=80&w=400&auto=format&fit=crop",
         },
         {
-          id: "3",
+          id: 3, // Cambiado a number
           nombre: "Motel Belgrano Deluxe",
           slug: "motel-belgrano-deluxe",
           direccion: "Cabildo 2200",

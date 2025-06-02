@@ -2,23 +2,34 @@ import { notFound } from "next/navigation"
 import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { MapPin, Star, Phone, Clock, Wifi, Car, Waves } from "lucide-react"
+import type { Telo } from "@/lib/models" // Importar la interfaz Telo
 
 interface PageProps {
   params: { slug: string }
 }
 
 async function getTeloBySlug(slug: string) {
-  const baseUrl = process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : "http://localhost:3000"
+  console.log("Page: Fetching telo with slug:", slug)
+  const baseUrl = process.env.VERCEL_URL ? `https://$\{process.env.VERCEL_URL\}` : "http://localhost:3000"
+  console.log("Page: Base URL:", baseUrl)
 
   try {
-    const res = await fetch(`${baseUrl}/api/telo/${slug}`, {
+    console.log("Page: Fetching from URL:", `$\{baseUrl\}/api/telo/$\{slug\}`)
+    const res = await fetch(`$\{baseUrl\}/api/telo/$\{slug\}`, {
       next: { revalidate: 3600 },
     })
+    console.log("Page: API response status:", res.status, res.statusText)
 
-    if (!res.ok) return null
-    return res.json()
+    if (!res.ok) {
+      console.error("Page: Failed to fetch telo, response not OK:", res.status, res.statusText)
+      return null
+    }
+    const data: Telo = await res.json() // Asegurarse de que el tipo sea Telo
+    console.log("Page: Raw data received from API:", data) // Log the raw data
+    console.log("Page: Telo data received:", data ? data.nombre : "None") // Log the name if available
+    return data
   } catch (error) {
-    console.error("Error fetching telo:", error)
+    console.error("Page: Error fetching telo in getTeloBySlug:", error)
     return null
   }
 }
@@ -67,7 +78,7 @@ export default async function TeloPage({ params }: PageProps) {
                 <div className="h-64 bg-gray-200 rounded-t-lg">
                   {telo.imagen_url ? (
                     <img
-                      src={telo.imagen_url || "/placeholder.svg?height=256&width=512&query=hotel exterior"} // Actualizado placeholder
+                      src={telo.imagen_url || "/placeholder.svg?height=256&width=512&query=hotel exterior"}
                       alt={telo.nombre}
                       className="object-cover w-full h-full rounded-t-lg"
                     />
@@ -116,7 +127,7 @@ export default async function TeloPage({ params }: PageProps) {
             <Card>
               <CardContent className="p-6">
                 <div className="mb-4 text-center">
-                  <div className="text-3xl font-bold text-purple-600">${telo.precio}</div>
+                  <div className="text-3xl font-bold text-purple-600">{telo.precio}</div>
                   <div className="text-sm text-gray-600">por turno</div>
                 </div>
 

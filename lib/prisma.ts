@@ -2,9 +2,9 @@
 /*
 import { PrismaClient } from "@prisma/client"
 
-const globalForPrisma = globalThis as unknown as {
+const globalForPrisma = globalThis as unknown as \{
   prisma: PrismaClient | undefined
-}
+\}
 
 export const prisma = globalForPrisma.prisma ?? new PrismaClient()
 
@@ -20,7 +20,7 @@ if (process.env.NODE_ENV !== "production") globalForPrisma.prisma = prisma
 
 export const mockTelos = [
   {
-    id: "1",
+    id: 1, // Cambiado a number
     nombre: "Hotel Palermo",
     slug: "hotel-palermo",
     direccion: "Av. Santa Fe 3000",
@@ -30,12 +30,12 @@ export const mockTelos = [
     servicios: ["WiFi", "Estacionamiento", "Hidromasaje"],
     descripcion: "Moderno hotel en el corazón de Palermo",
     rating: 4.5,
-    imagen_url: "https://images.unsplash.com/photo-1566073771259-6a8506099945?q=80&w=400&auto=format&fit=crop", // Cambiado
+    imagen_url: "https://images.unsplash.com/photo-1566073771259-6a8506099945?q=80&w=400&auto=format&fit=crop",
     createdAt: new Date(),
     updatedAt: new Date(),
   },
   {
-    id: "2",
+    id: 2, // Cambiado a number
     nombre: "Albergue Villa Crespo",
     slug: "albergue-villa-crespo",
     direccion: "Corrientes 4500",
@@ -45,12 +45,12 @@ export const mockTelos = [
     servicios: ["WiFi", "Aire Acondicionado"],
     descripcion: "Cómodo albergue en Villa Crespo",
     rating: 4.2,
-    imagen_url: "https://images.unsplash.com/photo-1551882547-ff40c63fe5fa?q=80&w=400&auto=format&fit=crop", // Cambiado
+    imagen_url: "https://images.unsplash.com/photo-1551882547-ff40c63fe5fa?q=80&w=400&auto=format&fit=crop",
     createdAt: new Date(),
     updatedAt: new Date(),
   },
   {
-    id: "3",
+    id: 3, // Cambiado a number
     nombre: "Motel Belgrano",
     slug: "motel-belgrano",
     direccion: "Cabildo 2200",
@@ -60,12 +60,12 @@ export const mockTelos = [
     servicios: ["Estacionamiento", "Jacuzzi", "TV Cable"],
     descripcion: "Elegante motel en Belgrano",
     rating: 4.7,
-    imagen_url: "https://images.unsplash.com/photo-1618773928121-c32242e63f39?q=80&w=400&auto=format&fit=crop", // Cambiado
+    imagen_url: "https://images.unsplash.com/photo-1618773928121-c32242e63f39?q=80&w=400&auto=format&fit=crop",
     createdAt: new Date(),
     updatedAt: new Date(),
   },
   {
-    id: "4",
+    id: 4, // Cambiado a number
     nombre: "Hotel Córdoba Centro",
     slug: "hotel-cordoba-centro",
     direccion: "San Martín 150",
@@ -75,12 +75,12 @@ export const mockTelos = [
     servicios: ["WiFi", "Frigobar"],
     descripcion: "Hotel céntrico en Córdoba",
     rating: 4.0,
-    imagen_url: "https://images.unsplash.com/photo-1566073771259-6a8506099945?q=80&w=400&auto=format&fit=crop", // Cambiado
+    imagen_url: "https://images.unsplash.com/photo-1566073771259-6a8506099945?q=80&w=400&auto=format&fit=crop",
     createdAt: new Date(),
     updatedAt: new Date(),
   },
   {
-    id: "5",
+    id: 5, // Cambiado a number
     nombre: "Albergue Rosario",
     slug: "albergue-rosario",
     direccion: "Pellegrini 1200",
@@ -90,17 +90,17 @@ export const mockTelos = [
     servicios: ["WiFi", "Estacionamiento"],
     descripcion: "Albergue moderno en Rosario",
     rating: 4.3,
-    imagen_url: "https://images.unsplash.com/photo-1590490360182-c33d57733427?q=80&w=400&auto=format&fit=crop", // Cambiado
+    imagen_url: "https://images.unsplash.com/photo-1590490360182-c33d57733427?q=80&w=400&auto=format&fit=crop",
     createdAt: new Date(),
     updatedAt: new Date(),
   },
 ]
 
 export const mockCiudades = [
-  { id: "1", nombre: "Buenos Aires", slug: "buenos-aires" },
-  { id: "2", nombre: "Córdoba", slug: "cordoba" },
-  { id: "3", nombre: "Rosario", slug: "rosario" },
-  { id: "4", nombre: "Mendoza", slug: "mendoza" },
-  { id: "5", nombre: "La Plata", slug: "la-plata" },
-  { id: "6", nombre: "Mar del Plata", slug: "mar-del-plata" },
+  { id: 1, nombre: "Buenos Aires", slug: "buenos-aires" }, // Cambiado a number
+  { id: 2, nombre: "Córdoba", slug: "cordoba" }, // Cambiado a number
+  { id: 3, nombre: "Rosario", slug: "rosario" }, // Cambiado a number
+  { id: 4, nombre: "Mendoza", slug: "mendoza" }, // Cambiado a number
+  { id: 5, nombre: "La Plata", slug: "la-plata" }, // Cambiado a number
+  { id: 6, nombre: "Mar del Plata", slug: "mar-del-plata" }, // Cambiado a number
 ]

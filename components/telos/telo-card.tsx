@@ -30,7 +30,7 @@ export function TeloCard({ telo }: TeloCardProps) {
           <div className="relative w-24 h-24 flex-shrink-0">
             {telo.imagen_url ? (
               <img
-                src={telo.imagen_url || "/placeholder.svg?height=96&width=96&query=hotel exterior"} // Actualizado placeholder
+                src={telo.imagen_url || "/placeholder.svg?height=96&width=96&query=hotel exterior"}
                 alt={telo.nombre}
                 className="w-full h-full object-cover rounded-l-2xl"
               />

@@ -7,7 +7,7 @@ export interface Ciudad {
 }
 
 export interface Telo {
-  id: string // Cambiado de number a string
+  id: number // Cambiado de string a number para coincidir con la base de datos
   nombre: string
   slug: string
   direccion: string
@@ -18,7 +18,7 @@ export interface Telo {
   servicios: string[]
   descripcion?: string
   rating: number
-  imagen_url?: string // Cambiado de imagen a imagen_url
+  imagen_url?: string
   lat?: number
   lng?: number
   activo: boolean

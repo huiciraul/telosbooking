@@ -5,7 +5,7 @@ import { Star, MapPin, Wifi, Car, Waves } from "lucide-react"
 
 interface TeloCardProps {
   telo: {
-    id: string
+    id: number // Cambiado a number
     nombre: string
     slug: string
     direccion: string
@@ -13,7 +13,7 @@ interface TeloCardProps {
     precio: number
     rating: number
     servicios: string[]
-    imagen_url?: string // Cambiado de imagen a imagen_url
+    imagen_url?: string
     disponible?: boolean
   }
 }
@@ -30,7 +30,7 @@ export function TeloCardBooking({ telo }: TeloCardProps) {
       <Card className="overflow-hidden hover:shadow-lg transition-shadow border border-gray-200">
         {/* Image */}
         <div className="aspect-[4/3] relative">
-          {telo.imagen_url ? ( // Cambiado de telo.imagen a telo.imagen_url
+          {telo.imagen_url ? (
             <img
               src={telo.imagen_url || "/placeholder.svg?height=300&width=400&query=hotel exterior"}
               alt={telo.nombre}
