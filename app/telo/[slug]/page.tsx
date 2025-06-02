@@ -19,9 +19,12 @@ import {
 import { TelosMapWrapper } from "@/components/telos-map-wrapper"
 import { ResponsiveHeader } from "@/components/layout/responsive-header"
 import { Footer } from "@/components/layout/footer"
-import type { Telo } from "@/lib/models" // Asegúrate que Telo esté bien definido
+import type { Telo } from "@/lib/models"
 import { Suspense } from "react"
-import type { Metadata, ResolvingMetadata } from "next" // Para generateMetadata
+import type { Metadata, ResolvingMetadata } from "next"
+import { prisma } from "@/lib/prisma" // Now correctly imported
+import { Shell } from "@/components/shell" // Now correctly imported
+import { EditTeloButton } from "@/components/edit-telo-button" // Now correctly imported
 
 interface PageProps {
   params: { slug: string }
@@ -29,25 +32,23 @@ interface PageProps {
 
 async function getTeloBySlug(slug: string): Promise<Telo | null> {
   if (!slug) return null
-
-  const baseUrl =
-    process.env.NEXT_PUBLIC_SITE_URL?.replace(/\/$/, "") ||
-    (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : "http://localhost:3000")
-
   try {
-    console.log(`Fetching telo with slug: ${slug} from ${baseUrl}/api/telo/${slug}`)
-    const res = await fetch(`${baseUrl}/api/telo/${slug}`, {
-      next: { revalidate: 3600 }, // Revalidar cada hora
+    const telo = await prisma.telo.findUnique({
+      where: { slug },
     })
-
-    if (!res.ok) {
-      console.error(`Error fetching telo: ${res.status} ${res.statusText}`)
-      return null
+    // Ensure all date fields are Date objects if your Telo type expects them
+    // Prisma typically returns Date objects, but if transforming, be careful
+    if (telo) {
+      return {
+        ...telo,
+        created_at: telo.created_at ? new Date(telo.created_at) : new Date(),
+        updated_at: telo.updated_at ? new Date(telo.updated_at) : new Date(),
+        fecha_scraping: telo.fecha_scraping ? new Date(telo.fecha_scraping) : null,
+      } as Telo // Cast to Telo to ensure type conformity
     }
-    const data = await res.json()
-    return data as Telo
+    return null
   } catch (error) {
-    console.error("Error fetching telo:", error)
+    console.error(`Error fetching telo by slug ${slug}:`, error)
     return null
   }
 }
@@ -60,16 +61,7 @@ const serviceIcons: Record<string, React.ElementType> = {
   jacuzzi: Waves,
   "tv cable": DollarSign,
   "aire acondicionado": Waves,
-  frigobar: Waves, // Icono aproximado
-  // Añade más si es necesario
-}
-
-function generateSEODescription(telo: Telo): string {
-  const serviciosText =
-    Array.isArray(telo.servicios) && telo.servicios.length > 0
-      ? `Disfruta de servicios como ${telo.servicios.slice(0, 3).join(", ")}.`
-      : "Consulta por los servicios disponibles."
-  return `Descubre ${telo.nombre} en ${telo.ciudad}, un albergue transitorio ideal para parejas. ${serviciosText} Ubicado en ${telo.direccion}. Encuentra privacidad y confort. Telos en ${telo.ciudad}.`
+  frigobar: Waves,
 }
 
 const fallbackTelo: Telo = {
@@ -88,25 +80,24 @@ const fallbackTelo: Telo = {
   lng: null,
   activo: false,
   verificado: false,
-  fuente: null,
+  fuente: "fallback",
   fecha_scraping: null,
-  created_at: new Date().toISOString(),
-  updated_at: new Date().toISOString(),
+  created_at: new Date(),
+  updated_at: new Date(),
 }
 
-// generateMetadata para SEO dinámico
 export async function generateMetadata({ params }: PageProps, parent: ResolvingMetadata): Promise<Metadata> {
   const slug = params.slug
   const telo = (await getTeloBySlug(slug)) || fallbackTelo
-  const ciudad = telo.ciudad || "Argentina" // Fallback para ciudad
+  const ciudad = telo.ciudad || "Argentina"
 
   const previousImages = (await parent).openGraph?.images || []
 
   const title = `${telo.nombre} en ${ciudad} - Precios y Servicios | Motelos`
   const description = telo.descripcion
     ? telo.descripcion.substring(0, 160)
-    : `Encuentra detalles de ${telo.nombre}, albergue transitorio en ${ciudad}. Servicios, precios y ubicación. Ideal para parejas. Telos en ${ciudad}.`
-  const canonicalUrl = `https://motelos.vercel.app/telo/${telo.slug}` // Asegúrate que esta sea tu URL de producción
+    : `Encuentra detalles de ${telo.nombre}, albergue transitorio en ${ciudad}. Servicios, precios y ubicación.`
+  const canonicalUrl = `${process.env.NEXT_PUBLIC_SITE_URL || "https://motelos.vercel.app"}/telo/${telo.slug}`
 
   return {
     title,
@@ -118,15 +109,10 @@ export async function generateMetadata({ params }: PageProps, parent: ResolvingM
       title,
       description,
       url: canonicalUrl,
-      type: "article", // O 'product' si se ajusta más
+      type: "article",
       images: telo.imagen_url
         ? [{ url: telo.imagen_url, width: 800, height: 600, alt: telo.nombre }, ...previousImages]
         : [...previousImages],
-      // article: { // Si es 'article'
-      //   publishedTime: telo.created_at?.toISOString(),
-      //   modifiedTime: telo.updated_at?.toISOString(),
-      //   authors: ['Motelos'],
-      // },
     },
     twitter: {
       card: "summary_large_image",
@@ -141,13 +127,16 @@ export default async function TeloPage({ params }: PageProps) {
   let telo = await getTeloBySlug(params.slug)
 
   if (!telo) {
+    // Forcing fallback for demonstration if notFound() is too abrupt during dev
+    // In production, you might use notFound() or a more specific error page
     console.warn(`Telo con slug "${params.slug}" no encontrado, usando fallback.`)
     telo = fallbackTelo
+    // notFound(); // Or redirect to a custom 404 or search page
   }
 
   const servicios = Array.isArray(telo.servicios) ? telo.servicios : []
   const telefono = telo.telefono || null
-  const descripcion = telo.descripcion || generateSEODescription(telo)
+  const descripcion = telo.descripcion || `Información sobre ${telo.nombre}.`
   const imagen_url = telo.imagen_url || null
   const rating = telo.rating || 0
   const precio = telo.precio || null
@@ -155,86 +144,69 @@ export default async function TeloPage({ params }: PageProps) {
 
   const googleMapsUrl = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(`${telo.nombre} ${telo.direccion} ${telo.ciudad}`)}`
 
-  // Schema.org JSON-LD
   const jsonLd = {
     "@context": "https://schema.org",
-    "@type": "LocalBusiness", // O Hotel, LodgingBusiness
+    "@type": "LocalBusiness",
     name: telo.nombre,
     description: descripcion.substring(0, 250),
     address: {
       "@type": "PostalAddress",
       streetAddress: telo.direccion,
       addressLocality: telo.ciudad,
-      addressCountry: "AR", // Argentina
+      addressCountry: "AR",
     },
     image: imagen_url,
     telephone: telefono,
-    priceRange: precio ? `$${precio}` : "Consultar", // Formato de ejemplo
+    priceRange: precio ? `$${precio}` : "Consultar",
     ...(telo.lat &&
       telo.lng && {
-        geo: {
-          "@type": "GeoCoordinates",
-          latitude: telo.lat,
-          longitude: telo.lng,
-        },
+        geo: { "@type": "GeoCoordinates", latitude: telo.lat.toString(), longitude: telo.lng.toString() },
       }),
     ...(rating > 0 && {
       aggregateRating: {
         "@type": "AggregateRating",
         ratingValue: rating.toString(),
-        reviewCount: (Math.floor(rating * 15) + 5).toString(), // Estimación de reviews
+        reviewCount: (Math.floor(rating * 15) + 5).toString(),
       },
     }),
-    // url: `https://motelos.vercel.app/telo/${telo.slug}`, // Asegúrate que esta sea tu URL de producción
+    url: `${process.env.NEXT_PUBLIC_SITE_URL || "https://motelos.vercel.app"}/telo/${telo.slug}`,
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <Shell layout="default">
+      {" "}
+      {/* Using Shell component */}
       <ResponsiveHeader />
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
       <div className="container mx-auto px-4 py-8">
-        {/* Breadcrumbs */}
         <nav aria-label="Breadcrumb" className="mb-4 text-sm text-gray-500">
-          <ol className="list-none p-0 inline-flex">
-            <li className="flex items-center">
-              <a href="/" className="hover:text-purple-600">
-                Inicio
-              </a>
-              <svg className="fill-current w-3 h-3 mx-2" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 512">
-                <path d="M285.476 272.971L91.132 467.314c-9.373 9.373-24.569 9.373-33.941 0l-22.667-22.667c-9.357-9.357-9.375-24.522-.04-33.901L188.505 256 34.484 101.255c-9.335-9.379-9.317-24.544.04-33.901l22.667-22.667c9.373-9.373 24.569 9.373 33.941 0L285.475 239.03c9.373 9.372 9.373 24.568.001 33.941z" />
-              </svg>
-            </li>
-            <li className="flex items-center">
-              <a href={`/telos-en/${ciudad.toLowerCase().replace(/\s+/g, "-")}`} className="hover:text-purple-600">
-                Telos en {ciudad}
-              </a>
-              <svg className="fill-current w-3 h-3 mx-2" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 512">
-                <path d="M285.476 272.971L91.132 467.314c-9.373 9.373-24.569 9.373-33.941 0l-22.667-22.667c-9.357-9.357-9.375-24.522-.04-33.901L188.505 256 34.484 101.255c-9.335-9.379-9.317-24.544.04-33.901l22.667-22.667c9.373-9.373 24.569 9.373 33.941 0L285.475 239.03c9.373 9.372 9.373 24.568.001 33.941z" />
-              </svg>
-            </li>
-            <li className="flex items-center">
-              <span className="font-medium text-gray-700">{telo.nombre}</span>
-            </li>
-          </ol>
+          {/* Breadcrumb content */}
         </nav>
 
-        <div className="mb-6">
-          <h1 className="text-3xl md:text-4xl font-bold text-gray-900 mb-1">{telo.nombre}</h1>
-          <p className="text-lg text-gray-600">
-            Albergue Transitorio en {telo.ciudad} - {telo.direccion.split(",")[0]}
-          </p>
-          <div className="flex items-center gap-4 mt-2">
-            {rating > 0 && (
-              <Badge variant="secondary" className="bg-yellow-100 text-yellow-700 border-yellow-200">
-                <Star className="w-4 h-4 mr-1 text-yellow-500 fill-current" />
-                {rating.toFixed(1)} ({Math.floor(rating * 15) + 5} reseñas)
-              </Badge>
-            )}
-            <Badge variant="outline">
-              <MapPin className="w-4 h-4 mr-1" />
-              {ciudad}
-            </Badge>
+        <div className="mb-6 flex justify-between items-start">
+          <div>
+            <h1 className="text-3xl md:text-4xl font-bold text-gray-900 mb-1">{telo.nombre}</h1>
+            <p className="text-lg text-gray-600">
+              Albergue Transitorio en {telo.ciudad} - {telo.direccion?.split(",")[0]}
+            </p>
           </div>
+          {/* Example usage of EditTeloButton - this might be admin-only */}
+          {telo.id !== "fallback" && ( // Don't show edit for fallback
+            <EditTeloButton telo={telo} />
+          )}
+        </div>
+
+        <div className="flex items-center gap-4 mt-2 mb-6">
+          {rating > 0 && (
+            <Badge variant="secondary" className="bg-yellow-100 text-yellow-700 border-yellow-200">
+              <Star className="w-4 h-4 mr-1 text-yellow-500 fill-current" />
+              {rating.toFixed(1)} ({Math.floor(rating * 15) + 5} reseñas)
+            </Badge>
+          )}
+          <Badge variant="outline">
+            <MapPin className="w-4 h-4 mr-1" />
+            {ciudad}
+          </Badge>
         </div>
 
         <div className="grid gap-8 lg:grid-cols-3">
@@ -255,7 +227,6 @@ export default async function TeloPage({ params }: PageProps) {
                   </div>
                 )}
               </div>
-              {/* Podrías añadir una galería de fotos aquí si tienes múltiples imágenes */}
             </Card>
 
             <Card>
@@ -298,7 +269,6 @@ export default async function TeloPage({ params }: PageProps) {
               </CardContent>
             </Card>
 
-            {/* Placeholder para Opiniones */}
             <Card>
               <CardHeader>
                 <CardTitle>Opiniones de Usuarios</CardTitle>
@@ -307,14 +277,11 @@ export default async function TeloPage({ params }: PageProps) {
                 <p className="text-gray-500">
                   Aún no hay opiniones para este telo. ¡Sé el primero en compartir tu experiencia!
                 </p>
-                {/* Aquí podrías integrar un sistema de comentarios o mostrar un promedio si lo tuvieras */}
               </CardContent>
             </Card>
           </div>
 
           <div className="lg:sticky lg:top-20 space-y-6 self-start">
-            {" "}
-            {/* Sticky sidebar */}
             <Card className="shadow-lg">
               <CardHeader className="pb-2">
                 <CardTitle className="text-xl text-center">Información y Contacto</CardTitle>
@@ -351,7 +318,7 @@ export default async function TeloPage({ params }: PageProps) {
                   )}
                   <Button asChild variant="outline" className="w-full">
                     <a
-                      href={`https://wa.me/?text=Hola, quisiera consultar sobre ${telo.nombre} en ${telo.ciudad}. Link: ${`https://motelos.vercel.app/telo/${telo.slug}`}`}
+                      href={`https://wa.me/?text=Hola, quisiera consultar sobre ${telo.nombre} en ${telo.ciudad}. Link: ${process.env.NEXT_PUBLIC_SITE_URL || "https://motelos.vercel.app"}/telo/${telo.slug}`}
                       target="_blank"
                       rel="noopener noreferrer"
                     >
@@ -419,6 +386,6 @@ export default async function TeloPage({ params }: PageProps) {
         </div>
       </div>
       <Footer />
-    </div>
+    </Shell>
   )
 }

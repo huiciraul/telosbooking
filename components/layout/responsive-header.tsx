@@ -3,7 +3,8 @@
 import { useState } from "react"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
-import { MapPin, Menu, X, Search } from "lucide-react"
+import { Menu, X, Search } from "lucide-react"
+import Image from "next/image"
 
 export function ResponsiveHeader() {
   const [showMobileMenu, setShowMobileMenu] = useState(false)
@@ -14,13 +15,8 @@ export function ResponsiveHeader() {
         <div className="container mx-auto px-4">
           <div className="flex items-center justify-between h-16">
             {/* Logo */}
-            <Link href="/" className="flex items-center space-x-2">
-              <div className="w-8 h-8 gradient-primary rounded-xl flex items-center justify-center">
-                <MapPin className="w-5 h-5 text-white" />
-              </div>
-              <span className="text-xl font-bold bg-gradient-to-r from-purple-600 to-purple-500 bg-clip-text text-transparent">
-                Motelos
-              </span>
+            <Link href="/" className="flex items-center">
+              <Image src="/logo.png" alt="Motelo Logo" width={120} height={36} priority />
             </Link>
 
             {/* Desktop Navigation */}

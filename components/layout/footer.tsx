@@ -1,4 +1,5 @@
 import Link from "next/link"
+import Image from "next/image"
 import { MapPin, Mail, Phone, Facebook, Twitter, Instagram } from "lucide-react"
 
 export function Footer() {
@@ -8,12 +9,9 @@ export function Footer() {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
           {/* Brand */}
           <div className="space-y-4">
-            <div className="flex items-center space-x-2">
-              <div className="w-8 h-8 bg-blue-600 rounded flex items-center justify-center">
-                <MapPin className="w-5 h-5 text-white" />
-              </div>
-              <span className="text-xl font-bold">Motelos</span>
-            </div>
+            <Link href="/" className="inline-block">
+              <Image src="/logo.png" alt="Motelo Logo" width={120} height={36} />
+            </Link>
             <p className="text-sm text-gray-400">
               La plataforma más completa para encontrar y reservar telos en Argentina. Comparamos precios y servicios
               para que encuentres la mejor opción.

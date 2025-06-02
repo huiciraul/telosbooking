@@ -1,20 +1,27 @@
-// Comentar temporalmente Prisma y usar datos mock
-/*
 import { PrismaClient } from "@prisma/client"
 
-const globalForPrisma = globalThis as unknown as \{
-  prisma: PrismaClient | undefined
-\}
+declare global {
+  // allow global `var` declarations
+  // eslint-disable-next-line no-unused-vars
+  var prisma: PrismaClient | undefined
+}
 
-export const prisma = globalForPrisma.prisma ?? new PrismaClient()
+export const prisma =
+  global.prisma ||
+  new PrismaClient({
+    log: process.env.NODE_ENV === "development" ? ["query", "error", "warn"] : ["error"],
+  })
 
-if (process.env.NODE_ENV !== "production") globalForPrisma.prisma = prisma
-*/
+if (process.env.NODE_ENV !== "production") {
+  global.prisma = prisma
+}
 
-// Datos mock temporales para testing con descripciones SEO optimizadas
+// Mock data can remain for testing or specific fallbacks if needed,
+// but the application will primarily use the prisma client above.
+
 export const mockTelos = [
   {
-    id: 1,
+    id: "1", // Assuming ID is string based on Prisma typical usage
     nombre: "Hotel Palermo Premium",
     slug: "hotel-palermo-premium",
     direccion: "Av. Santa Fe 3000",
@@ -26,11 +33,17 @@ export const mockTelos = [
       "Hotel Palermo Premium es un albergue transitorio de lujo ubicado en el corazón de Palermo, Buenos Aires. Este telo premium ofrece habitaciones por horas con hidromasaje, WiFi gratuito y estacionamiento privado. Ideal para parejas que buscan un albergue temporario con máxima comodidad y discreción en una de las zonas más exclusivas de la ciudad.",
     rating: 4.5,
     imagen_url: "https://images.unsplash.com/photo-1566073771259-6a8506099945?q=80&w=400&auto=format&fit=crop",
-    createdAt: new Date(),
-    updatedAt: new Date(),
+    lat: -34.5859, // Example coordinates
+    lng: -58.4074,
+    activo: true,
+    verificado: true,
+    fuente: "manual",
+    fecha_scraping: new Date(),
+    created_at: new Date(),
+    updated_at: new Date(),
   },
   {
-    id: 2,
+    id: "2",
     nombre: "Albergue Villa Crespo",
     slug: "albergue-villa-crespo",
     direccion: "Corrientes 4500",
@@ -42,64 +55,41 @@ export const mockTelos = [
       "Albergue Villa Crespo es un telo moderno y accesible en el vibrante barrio de Villa Crespo. Este albergue transitorio cuenta con aire acondicionado y WiFi gratuito, perfecto para parejas que buscan un albergue temporario cómodo y bien ubicado. Excelente relación calidad-precio en uno de los barrios más dinámicos de Buenos Aires.",
     rating: 4.2,
     imagen_url: "https://images.unsplash.com/photo-1551882547-ff40c63fe5fa?q=80&w=400&auto=format&fit=crop",
-    createdAt: new Date(),
-    updatedAt: new Date(),
+    lat: -34.597,
+    lng: -58.433,
+    activo: true,
+    verificado: true,
+    fuente: "manual",
+    fecha_scraping: new Date(),
+    created_at: new Date(),
+    updated_at: new Date(),
   },
-  {
-    id: 3,
-    nombre: "Motel Belgrano Deluxe",
-    slug: "motel-belgrano-deluxe",
-    direccion: "Cabildo 2200",
-    ciudad: "Buenos Aires",
-    precio: 4200,
-    telefono: "011-4888-9012",
-    servicios: ["Estacionamiento", "Jacuzzi", "TV Cable"],
-    descripcion:
-      "Motel Belgrano Deluxe es un albergue transitorio de categoría superior en el elegante barrio de Belgrano. Este telo de lujo ofrece jacuzzi privado, TV por cable y estacionamiento seguro. Perfecto para parejas que buscan un albergue temporario exclusivo con todas las comodidades en una zona residencial premium de Buenos Aires.",
-    rating: 4.7,
-    imagen_url: "https://images.unsplash.com/photo-1618773928121-c32242e63f39?q=80&w=400&auto=format&fit=crop",
-    createdAt: new Date(),
-    updatedAt: new Date(),
-  },
-  {
-    id: 4,
-    nombre: "Hotel Córdoba Centro",
-    slug: "hotel-cordoba-centro",
-    direccion: "San Martín 150",
-    ciudad: "Córdoba",
-    precio: null, // Sin precio inventado
-    telefono: null, // Sin teléfono
-    servicios: ["WiFi", "Frigobar"],
-    descripcion:
-      "Hotel Córdoba Centro es un albergue transitorio céntrico en la ciudad de Córdoba. Este telo ofrece habitaciones por horas con WiFi gratuito y frigobar, ubicado estratégicamente en el centro histórico. Ideal para parejas que visitan Córdoba y buscan un albergue temporario con fácil acceso a los principales atractivos de la ciudad.",
-    rating: 4.0,
-    imagen_url: "https://images.unsplash.com/photo-1566073771259-6a8506099945?q=80&w=400&auto=format&fit=crop",
-    createdAt: new Date(),
-    updatedAt: new Date(),
-  },
-  {
-    id: 5,
-    nombre: "Albergue Rosario",
-    slug: "albergue-rosario",
-    direccion: "Pellegrini 1200",
-    ciudad: "Rosario",
-    precio: 2200,
-    telefono: "0341-455-7890",
-    servicios: ["WiFi", "Estacionamiento"],
-    descripcion:
-      "Albergue Rosario es un telo moderno y funcional en el corazón de Rosario, Santa Fe. Este albergue transitorio ofrece WiFi gratuito y estacionamiento privado, perfecto para parejas que buscan un albergue temporario confiable y bien ubicado. Excelente opción para quienes visitan la ciudad más importante de Santa Fe.",
-    rating: 4.3,
-    imagen_url: "https://images.unsplash.com/photo-1590490360182-c33d57733427?q=80&w=400&auto=format&fit=crop",
-    createdAt: new Date(),
-    updatedAt: new Date(),
-  },
+  // Add more mock telos if needed, ensuring all fields from Telo type are present
 ]
 
 export const mockCiudades = [
-  { id: 1, nombre: "Buenos Aires", slug: "buenos-aires" },
-  { id: 2, nombre: "Córdoba", slug: "cordoba" },
-  { id: 3, nombre: "Rosario", slug: "rosario" },
-  { id: 4, nombre: "Mendoza", slug: "mendoza" },
-  { id: 5, nombre: "La Plata", slug: "la-plata" },
-  { id: 6, nombre: "Mar del Plata", slug: "mar-del-plata" },
+  {
+    id: "1",
+    nombre: "Buenos Aires",
+    slug: "buenos-aires",
+    provincia: "Buenos Aires",
+    pais: "Argentina",
+    imagen_url: "/placeholder.svg?width=400&height=300",
+  },
+  {
+    id: "2",
+    nombre: "Córdoba",
+    slug: "cordoba",
+    provincia: "Córdoba",
+    pais: "Argentina",
+    imagen_url: "/placeholder.svg?width=400&height=300",
+  },
+  {
+    id: "3",
+    nombre: "Rosario",
+    slug: "rosario",
+    provincia: "Santa Fe",
+    pais: "Argentina",
+    imagen_url: "/placeholder.svg?width=400&height=300",
+  },
 ]
