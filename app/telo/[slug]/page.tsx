@@ -9,27 +9,19 @@ interface PageProps {
 }
 
 async function getTeloBySlug(slug: string) {
-  console.log("Page: Fetching telo with slug:", slug)
-  const baseUrl = process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : "http://localhost:3000"
-  console.log("Page: Base URL:", baseUrl)
+  // Usa NEXT_PUBLIC_SITE_URL si está definida, si no VERCEL_URL, si no localhost
+  const baseUrl =
+    process.env.NEXT_PUBLIC_SITE_URL?.replace(/\/$/, "") ||
+    (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : "http://localhost:3000")
 
   try {
-    console.log("Page: Fetching from URL:", `${baseUrl}/api/telo/${slug}`)
     const res = await fetch(`${baseUrl}/api/telo/${slug}`, {
       next: { revalidate: 3600 },
     })
-    console.log("Page: API response status:", res.status, res.statusText)
-
-    if (!res.ok) {
-      console.error("Page: Failed to fetch telo, response not OK:", res.status, res.statusText)
-      return null
-    }
-
+    if (!res.ok) return null
     const data: Telo = await res.json()
-    console.log("Page: Telo data received:", data?.nombre || "None")
     return data
   } catch (error) {
-    console.error("Page: Error fetching telo in getTeloBySlug:", error)
     return null
   }
 }
