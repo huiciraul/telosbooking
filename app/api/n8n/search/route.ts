@@ -16,7 +16,7 @@ export async function POST(request: NextRequest) {
     console.log(`🔍 Iniciando búsqueda y persistencia para: ${ciudad}`)
 
     // URL del webhook de n8n (configurable via env)
-    const n8nWebhookUrl = "https://huiciraul.app.n8n.cloud/webhook/buscar-tipos"
+    const n8nWebhookUrl = process.env.N8N_WEBHOOK_URL
     const n8nWebhookToken = process.env.N8N_WEBHOOK_TOKEN
 
     console.log("📤 Realizando solicitud POST a n8n webhook (para activar y obtener datos):", { ciudad })

@@ -51,3 +51,32 @@ export const ciudadSearchSchema = z.object({
 })
 
 export type CiudadSearch = z.infer<typeof ciudadSearchSchema>
+
+// Definición de la interfaz Ciudad
+export interface Ciudad {
+  id: string // Cambiado a string para coincidir con la base de datos
+  nombre: string
+  slug: string
+  provincia?: string
+  busquedas?: number
+  total_telos?: number
+  created_at?: Date
+}
+
+// Definición de la interfaz Review
+export interface Review {
+  id: number
+  telo_id: string // Cambiado a string para coincidir con el id de Telo
+  usuario_nombre: string
+  rating: number
+  comentario?: string
+  created_at?: Date
+}
+
+// Definición de la interfaz Favorito
+export interface Favorito {
+  id: number
+  usuario_id: string
+  telo_id: string // Cambiado a string para coincidir con el id de Telo
+  created_at?: Date
+}

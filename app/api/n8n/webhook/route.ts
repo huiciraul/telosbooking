@@ -1,6 +1,6 @@
 import { type NextRequest, NextResponse } from "next/server"
 import { executeQuery, checkDatabaseConnection } from "@/lib/db"
-import { n8nTeloSchema } from "@/lib/validators/telo-schema"
+import { n8nTeloSchema } from "@/lib/models"
 import { generateSlug } from "@/utils/generate-slug"
 import { validateWebhookToken, checkRateLimit } from "@/lib/security"
 

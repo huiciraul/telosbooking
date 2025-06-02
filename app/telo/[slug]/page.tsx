@@ -3,6 +3,7 @@ import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { MapPin, Star, Phone, Clock, Wifi, Car, Waves } from "lucide-react"
 import type { Telo } from "@/lib/models"
+import { TelosMapWrapper } from "@/components/telos-map-wrapper"
 
 interface PageProps {
   params: { slug: string }
@@ -157,9 +158,7 @@ export default async function TeloPage({ params }: PageProps) {
                 <p className="text-sm text-gray-600 mb-3">
                   {telo.direccion}, {telo.ciudad}
                 </p>
-                <div className="h-32 bg-gray-200 rounded-lg flex items-center justify-center">
-                  <span className="text-gray-500 text-sm">Mapa interactivo</span>
-                </div>
+                <TelosMapWrapper telo={telo} />
               </CardContent>
             </Card>
           </div>

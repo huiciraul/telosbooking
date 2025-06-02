@@ -37,8 +37,8 @@ export function QuickFilters() {
                   flex items-center space-x-2 px-4 py-2 rounded-full border-2 transition-all
                   ${
                     isSelected
-                      ? "border-purple-300 bg-purple-50 text-purple-700"
-                      : "border-gray-200 bg-white text-gray-600 hover:border-purple-200"
+                      ? "border-primary-300 bg-primary-50 text-primary-700"
+                      : "border-gray-200 bg-white text-gray-600 hover:border-primary-200"
                   }
                 `}
               >

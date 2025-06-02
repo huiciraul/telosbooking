@@ -1,62 +1,45 @@
-# 🔧 Solución de errores TelosBooking
+# 🔧 Solución de errores Motelos
 
-## 1. Error de n8n (404 Not Found)
-
-### Problema:
-El webhook `buscar-tipos` no está registrado o el workflow no está activo.
-
-### Solución:
-1. **Ve a tu instancia de n8n**: https://huiciraul.app.n8n.cloud
-2. **Busca el workflow**: "TelosBooking Scraper" o similar
-3. **Actívalo**: Asegúrate de que el toggle esté en ON
-4. **Verifica la URL**: En el nodo Webhook, copia la URL completa
-5. **Actualiza la variable de entorno**: `N8N_WEBHOOK_URL` debe ser la URL completa
-
-## 2. Errores de base de datos
+## 1. Errores de base de datos
 
 ### Problema:
 Conexión a la base de datos Neon PostgreSQL fallando.
 
 ### Solución:
-1. **Verifica DATABASE_URL**: Debe estar correctamente configurada
-2. **Ejecuta el seed**: Visita `/api/seed` para crear las tablas
-3. **Verifica conectividad**: Usa `/diagnostico` para verificar el estado
+1. **Verifica DATABASE_URL**: Debe estar correctamente configurada en tus variables de entorno de Vercel.
+2. **Ejecuta el seed**: Visita `/api/seed` en tu aplicación desplegada para crear las tablas si aún no existen.
+3. **Verifica conectividad**: Usa la página `/diagnostico` para verificar el estado de la conexión a la base de datos.
 
-## 3. Variables de entorno necesarias
+## 2. Variables de entorno necesarias
 
 \`\`\`env
 # Base de datos (REQUERIDO)
 DATABASE_URL=postgresql://...
 
 # n8n (REQUERIDO para scraping)
-N8N_WEBHOOK_URL=https://huiciraul.app.n8n.cloud/webhook/buscar-tipos
+N8N_WEBHOOK_URL=https://tu-instancia.n8n.cloud/webhook/buscar-tipos
 N8N_WEBHOOK_TOKEN=tu-token-secreto
 
 # Seguridad (OPCIONAL)
 ALLOWED_WEBHOOK_IPS=tu.ip.aqui
 \`\`\`
 
-## 4. Cómo obtener tu IP
+## 3. Pasos para solucionar problemas de datos
 
-\`\`\`bash
-# Opción 1: Terminal
-curl ifconfig.me
+1. **Configura las variables de entorno** en Vercel, especialmente `DATABASE_URL`, `N8N_WEBHOOK_URL` y `N8N_WEBHOOK_TOKEN`.
+2. **Ejecuta `/api/seed`** para poblar la BD con las tablas necesarias.
+3. **Prueba `/api/test-scraping`** para simular una llamada a n8n y verificar si los datos se reciben y persisten.
+4. **Verifica en `/diagnostico`** el estado de la base de datos y la API.
 
-# Opción 2: Navegador
-# Visita: https://whatismyipaddress.com/
-\`\`\`
-
-## 5. Pasos para solucionar
-
-1. **Activa el workflow en n8n**
-2. **Configura las variables de entorno**
-3. **Ejecuta `/api/seed` para poblar la BD**
-4. **Prueba `/api/test-scraping`**
-5. **Verifica en `/diagnostico`**
-
-## 6. URLs importantes
+## 4. URLs importantes
 
 - **Diagnóstico**: `/diagnostico`
 - **Admin**: `/admin`
 - **Seed BD**: `/api/seed`
 - **Test scraping**: `/api/test-scraping`
+\`\`\`
+
+
+### 2. Eliminar funcionalidades no esenciales (internas a la app)
+
+Para enfocarnos en el modelo de AdSense y la eficiencia, eliminaremos los componentes y páginas de reserva o de gestión de usuarios:

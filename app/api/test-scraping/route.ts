@@ -9,7 +9,7 @@ export async function POST() {
     console.log("🧪 Iniciando test de scraping...")
 
     // URL del webhook de n8n
-    const webhookUrl = process.env.N8N_WEBHOOK_URL || "https://huiciraul.app.n8n.cloud/webhook/buscar-tipos"
+    const webhookUrl = process.env.N8N_WEBHOOK_URL
     const token = process.env.N8N_WEBHOOK_TOKEN
 
     const payload = {

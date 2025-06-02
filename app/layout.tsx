@@ -6,10 +6,10 @@ import "./globals.css"
 const inter = Inter({ subsets: ["latin"] })
 
 export const metadata: Metadata = {
-  title: "TelosBooking - Encuentra el telo perfecto en Argentina",
+  title: "Motelos - Encuentra el motelo perfecto en Argentina",
   description:
-    "La plataforma más completa para encontrar y comparar telos y albergues transitorios en Argentina. Precios, servicios, ubicaciones y más.",
-  keywords: "telos, albergues transitorios, moteles, argentina, buenos aires, córdoba, rosario",
+    "La plataforma más completa para encontrar y comparar moteles y albergues transitorios en Argentina. Precios, servicios, ubicaciones y más.",
+  keywords: "moteles, albergues transitorios, telos, argentina, buenos aires, córdoba, rosario",
   authors: [{ name: "TelosBooking" }],
   creator: "TelosBooking",
   publisher: "TelosBooking",
@@ -18,16 +18,16 @@ export const metadata: Metadata = {
     type: "website",
     locale: "es_AR",
     url: "https://telosbooking.vercel.app",
-    title: "TelosBooking - Encuentra el telo perfecto en Argentina",
-    description: "La plataforma más completa para encontrar y comparar telos y albergues transitorios en Argentina.",
-    siteName: "TelosBooking",
+    title: "Motelos - Encuentra el motelo perfecto en Argentina",
+    description: "La plataforma más completa para encontrar y comparar moteles y albergues transitorios en Argentina.",
+    siteName: "Motelos",
   },
   twitter: {
     card: "summary_large_image",
-    title: "TelosBooking - Encuentra el telo perfecto en Argentina",
-    description: "La plataforma más completa para encontrar y comparar telos y albergues transitorios en Argentina.",
+    title: "Motelos - Encuentra el motelo perfecto en Argentina",
+    description: "La plataforma más completa para encontrar y comparar moteles y albergues transitorios en Argentina.",
   },
-    generator: 'v0.dev'
+  generator: "v0.dev",
 }
 
 export default function RootLayout({

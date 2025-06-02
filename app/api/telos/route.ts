@@ -1,20 +1,11 @@
 import { type NextRequest, NextResponse } from "next/server"
-import { z } from "zod"
 import { executeQuery } from "@/lib/db"
-
-const querySchema = z.object({
-  ciudad: z.string().optional(),
-  barrio: z.string().optional(),
-  amenities: z.string().optional(),
-  precio_min: z.string().optional(),
-  precio_max: z.string().optional(),
-  limit: z.string().optional(),
-})
+import { searchTelosSchema, teloSchema } from "@/lib/models"
 
 export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url)
-    const query = querySchema.parse(Object.fromEntries(searchParams))
+    const query = searchTelosSchema.parse(Object.fromEntries(searchParams))
 
     // Construir la consulta SQL base
     let sqlQuery = `
@@ -76,24 +67,10 @@ export async function GET(request: NextRequest) {
   }
 }
 
-const createTeloSchema = z.object({
-  nombre: z.string().min(1),
-  direccion: z.string().min(1),
-  ciudad: z.string().min(1),
-  precio: z.number().positive(),
-  telefono: z.string().optional(),
-  servicios: z.array(z.string()).default([]),
-  descripcion: z.string().optional(),
-  rating: z.number().min(0).max(5).default(0),
-  imagen_url: z.string().url().optional(),
-  lat: z.number().optional(),
-  lng: z.number().optional(),
-})
-
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json()
-    const data = createTeloSchema.parse(body)
+    const data = teloSchema.parse(body)
 
     // Generar slug desde el nombre
     const slug = data.nombre

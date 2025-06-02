@@ -12,7 +12,7 @@ export function Footer() {
               <div className="w-8 h-8 bg-blue-600 rounded flex items-center justify-center">
                 <MapPin className="w-5 h-5 text-white" />
               </div>
-              <span className="text-xl font-bold">TelosBooking</span>
+              <span className="text-xl font-bold">Motelos</span>
             </div>
             <p className="text-sm text-gray-400">
               La plataforma más completa para encontrar y reservar telos en Argentina. Comparamos precios y servicios
@@ -36,7 +36,7 @@ export function Footer() {
             <h3 className="text-lg font-semibold mb-4">Enlaces rápidos</h3>
             <ul className="space-y-2 text-sm">
               <li>
-                <Link href="/telos" className="text-gray-400 hover:text-white transition-colors">
+                <Link href="/buscar" className="text-gray-400 hover:text-white transition-colors">
                   Buscar telos
                 </Link>
               </li>
@@ -46,13 +46,13 @@ export function Footer() {
                 </Link>
               </li>
               <li>
-                <Link href="/como-funciona" className="text-gray-400 hover:text-white transition-colors">
+                <Link href="/funciona" className="text-gray-400 hover:text-white transition-colors">
                   ¿Cómo funciona?
                 </Link>
               </li>
               <li>
-                <Link href="/agregar-telo" className="text-gray-400 hover:text-white transition-colors">
-                  Registrá tu telo
+                <Link href="/contacto" className="text-gray-400 hover:text-white transition-colors">
+                  Listar tu motel
                 </Link>
               </li>
             </ul>
@@ -73,7 +73,7 @@ export function Footer() {
                 </Link>
               </li>
               <li>
-                <Link href="/terminos" className="text-gray-400 hover:text-white transition-colors">
+                <Link href="/terminos-condiciones" className="text-gray-400 hover:text-white transition-colors">
                   Términos de uso
                 </Link>
               </li>
@@ -107,7 +107,7 @@ export function Footer() {
 
         <div className="border-t border-gray-800 mt-8 pt-8 text-center">
           <p className="text-sm text-gray-400">
-            © 2024 TelosBooking. Todos los derechos reservados.
+            © 2024 Motelos. Todos los derechos reservados.
             <span className="ml-2 text-blue-400">Powered by n8n + AI</span>
           </p>
         </div>

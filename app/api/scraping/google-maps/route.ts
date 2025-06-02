@@ -1,11 +1,5 @@
 import { type NextRequest, NextResponse } from "next/server"
-import { z } from "zod"
-
-const searchSchema = z.object({
-  query: z.string().min(1),
-  location: z.string().min(1),
-  radius: z.number().optional().default(5000),
-})
+import { ciudadSearchSchema } from "@/lib/models"
 
 /**
  * POST /api/scraping/google-maps
@@ -14,12 +8,12 @@ const searchSchema = z.object({
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json()
-    const { query, location, radius } = searchSchema.parse(body)
+    const { query, location, radius } = ciudadSearchSchema.parse(body)
 
     console.log(`🔍 Iniciando scraping para: ${location}`)
 
     // URL del webhook de n8n (configurable via env)
-    const webhookUrl = process.env.N8N_WEBHOOK_URL || "https://huiciraul.app.n8n.cloud/webhook/buscar-tipos"
+    const webhookUrl = process.env.N8N_WEBHOOK_URL
     const token = process.env.N8N_WEBHOOK_TOKEN
 
     const payload = {

@@ -1,6 +1,6 @@
-# TelosBooking API
+# Motelos API
 
-API completa para la plataforma TelosBooking - Encuentra telos y albergues transitorios en Argentina.
+API completa para la plataforma Motelos - Encuentra telos y albergues transitorios en Argentina.  Este proyecto está diseñado para ser informativo y optimizado para AdSense.
 
 ## 🚀 Tecnologías
 
@@ -128,8 +128,8 @@ Verifica el estado del webhook y obtiene estadísticas.
 DATABASE_URL=postgresql://...
 
 # Webhook n8n
+N8N_WEBHOOK_URL=tu-token-secreto-aqui
 N8N_WEBHOOK_TOKEN=tu-token-secreto-aqui
-N8N_WEBHOOK_URL=https://tu-instancia.n8n.cloud/webhook/endpoint
 
 # Seguridad adicional (opcional)
 ALLOWED_WEBHOOK_IPS=192.168.1.1,10.0.0.1

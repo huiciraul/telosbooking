@@ -1,12 +1,7 @@
 import { type NextRequest, NextResponse } from "next/server"
-import { z } from "zod"
 import { executeQuery } from "@/lib/db"
 import { generateSlug } from "@/utils/generate-slug"
-
-const buscarCiudadSchema = z.object({
-  nombre: z.string().min(1, "El nombre de la ciudad es requerido"),
-  provincia: z.string().optional(),
-})
+import { ciudadSearchSchema } from "@/lib/models"
 
 /**
  * POST /api/ciudad/buscar
@@ -15,7 +10,7 @@ const buscarCiudadSchema = z.object({
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json()
-    const { nombre, provincia } = buscarCiudadSchema.parse(body)
+    const { nombre, provincia } = ciudadSearchSchema.parse(body)
 
     // Normalizar nombre de ciudad
     const nombreNormalizado = nombre.trim()

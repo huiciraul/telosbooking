@@ -3,7 +3,7 @@
 import { useState } from "react"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
-import { Heart, User, MapPin, Menu, X } from "lucide-react"
+import { MapPin, Menu, X } from "lucide-react"
 
 export function ResponsiveHeader() {
   const [showMobileMenu, setShowMobileMenu] = useState(false)
@@ -19,7 +19,7 @@ export function ResponsiveHeader() {
                 <MapPin className="w-5 h-5 text-white" />
               </div>
               <span className="text-xl font-bold bg-gradient-to-r from-purple-600 to-purple-500 bg-clip-text text-transparent">
-                TelosBooking
+                Motelos
               </span>
             </Link>
 
@@ -31,28 +31,16 @@ export function ResponsiveHeader() {
               <Link href="/como-funciona" className="text-sm font-medium hover:text-purple-600 transition-colors">
                 ¿Cómo funciona?
               </Link>
-              <Link href="/agregar-telo" className="text-sm font-medium hover:text-purple-600 transition-colors">
-                Agregar telo
+              <Link href="/contacto" className="text-sm font-medium hover:text-purple-600 transition-colors">
+                Listar tu motel
               </Link>
             </nav>
 
             {/* Desktop Actions */}
-            <div className="hidden md:flex items-center space-x-3">
-              <Button variant="ghost" size="sm" className="rounded-full">
-                <Heart className="w-4 h-4 mr-2" />
-                Favoritos
-              </Button>
-              <Button variant="outline" size="sm" className="rounded-full">
-                <User className="w-4 h-4 mr-2" />
-                Iniciar sesión
-              </Button>
-            </div>
+            <div className="hidden md:flex items-center space-x-3"></div>
 
             {/* Mobile Actions */}
             <div className="flex md:hidden items-center space-x-2">
-              <Button variant="ghost" size="sm" className="rounded-full">
-                <Heart className="w-5 h-5" />
-              </Button>
               <Button
                 variant="ghost"
                 size="sm"
@@ -80,14 +68,10 @@ export function ResponsiveHeader() {
               <Link href="/como-funciona" className="block py-2 text-sm font-medium hover:text-purple-600">
                 ¿Cómo funciona?
               </Link>
-              <Link href="/agregar-telo" className="block py-2 text-sm font-medium hover:text-purple-600">
-                Agregar telo
+              <Link href="/contacto" className="block py-2 text-sm font-medium hover:text-purple-600">
+                Listar tu motel
               </Link>
               <hr className="my-2" />
-              <Button variant="outline" className="w-full rounded-full">
-                <User className="w-4 h-4 mr-2" />
-                Iniciar sesión
-              </Button>
             </div>
           </div>
         </div>
