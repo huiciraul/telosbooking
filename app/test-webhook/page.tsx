@@ -13,17 +13,18 @@ export default function TestWebhookPage() {
   const [result, setResult] = useState<any>(null)
   const [webhookConfig, setWebhookConfig] = useState<any>(null)
 
-  const baseUrl = process.env.NEXT_PUBLIC_VERCEL_URL
-    ? `https://${process.env.NEXT_PUBLIC_VERCEL_URL}`
-    : "http://localhost:3000"
-
   const checkWebhookConfig = async () => {
     try {
-      const response = await fetch(`${baseUrl}/api/test-scraping`)
+      const response = await fetch("/api/test-scraping")
       const data = await response.json()
       setWebhookConfig(data)
     } catch (error) {
       console.error("Error checking webhook config:", error)
+      setWebhookConfig({
+        error: "No se pudo verificar la configuración",
+        webhookUrl: "No configurado",
+        hasToken: false,
+      })
     }
   }
 
@@ -32,7 +33,7 @@ export default function TestWebhookPage() {
     setResult(null)
 
     try {
-      const response = await fetch(`${baseUrl}/api/scraping/google-maps`, {
+      const response = await fetch("/api/scraping/google-maps", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -63,7 +64,7 @@ export default function TestWebhookPage() {
     setResult(null)
 
     try {
-      const response = await fetch(`${baseUrl}/api/test-scraping`, {
+      const response = await fetch("/api/test-scraping", {
         method: "POST",
       })
 
@@ -128,6 +129,11 @@ export default function TestWebhookPage() {
                       <code className="text-xs bg-gray-100 p-2 rounded block break-all">
                         {webhookConfig.webhookUrl}
                       </code>
+                    </div>
+                  )}
+                  {webhookConfig.error && (
+                    <div className="p-3 bg-red-50 border border-red-200 rounded">
+                      <p className="text-red-800 text-sm">{webhookConfig.error}</p>
                     </div>
                   )}
                 </div>
