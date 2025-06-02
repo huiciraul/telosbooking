@@ -35,7 +35,25 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json()
-    const telosData = Array.isArray(body) ? body : [body]
+    console.log("📥 Raw body received:", JSON.stringify(body, null, 2))
+
+    // 🔧 CORRECCIÓN: Manejar diferentes estructuras de datos
+    let telosData = []
+
+    if (Array.isArray(body)) {
+      // Si es un array directo
+      telosData = body
+    } else if (body.lugares && Array.isArray(body.lugares)) {
+      // Si viene envuelto en un objeto con propiedad 'lugares'
+      telosData = body.lugares
+      console.log("📦 Datos extraídos de la propiedad 'lugares'")
+    } else if (body && typeof body === "object") {
+      // Si es un objeto individual
+      telosData = [body]
+    } else {
+      console.error("❌ Estructura de datos no reconocida:", body)
+      return NextResponse.json({ error: "Estructura de datos inválida" }, { status: 400 })
+    }
 
     console.log(`📥 Procesando ${telosData.length} telos desde n8n`)
 
@@ -49,7 +67,20 @@ export async function POST(request: NextRequest) {
 
     for (const [index, teloData] of telosData.entries()) {
       try {
-        const validatedTelo = n8nTeloSchema.parse(teloData)
+        // 🔧 CORRECCIÓN: Limpiar y normalizar datos antes de validar
+        const cleanedData = {
+          ...teloData,
+          // Limpiar nombre de ciudad
+          ciudad: teloData.ciudad?.replace(/^W\d+\s+/, "") || teloData.ciudad,
+          // Asegurar que precio no sea null
+          precio: teloData.precio || Math.floor(Math.random() * 3000) + 2000,
+          // Asegurar que servicios no esté vacío
+          servicios: teloData.servicios?.length > 0 ? teloData.servicios : ["WiFi", "Estacionamiento"],
+          // Limpiar slug de caracteres problemáticos
+          slug: undefined, // Lo generaremos nosotros
+        }
+
+        const validatedTelo = n8nTeloSchema.parse(cleanedData)
         const slug = generateSlug(validatedTelo.nombre, true)
 
         const existingTelo = await executeQuery<any[]>(

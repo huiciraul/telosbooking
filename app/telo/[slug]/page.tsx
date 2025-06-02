@@ -2,7 +2,7 @@ import { notFound } from "next/navigation"
 import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { MapPin, Star, Phone, Clock, Wifi, Car, Waves } from "lucide-react"
-import type { Telo } from "@/lib/models" // Importar la interfaz Telo
+import type { Telo } from "@/lib/models"
 
 interface PageProps {
   params: { slug: string }
@@ -10,26 +10,23 @@ interface PageProps {
 
 async function getTeloBySlug(slug: string) {
   console.log("Page: Fetching telo with slug:", slug)
-  const baseUrl = process.env.VERCEL_URL ? `https://$\{process.env.VERCEL_URL\}` : "http://localhost:3000"
+  const baseUrl = process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : "http://localhost:3000"
   console.log("Page: Base URL:", baseUrl)
 
   try {
-    const baseUrl = process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : "http://localhost:3000"
     console.log("Page: Fetching from URL:", `${baseUrl}/api/telo/${slug}`)
-
     const res = await fetch(`${baseUrl}/api/telo/${slug}`, {
       next: { revalidate: 3600 },
     })
-
     console.log("Page: API response status:", res.status, res.statusText)
 
     if (!res.ok) {
       console.error("Page: Failed to fetch telo, response not OK:", res.status, res.statusText)
       return null
     }
-    const data: Telo = await res.json() // Asegurarse de que el tipo sea Telo
-    console.log("Page: Raw data received from API:", data) // Log the raw data
-    console.log("Page: Telo data received:", data ? data.nombre : "None") // Log the name if available
+
+    const data: Telo = await res.json()
+    console.log("Page: Telo data received:", data?.nombre || "None")
     return data
   } catch (error) {
     console.error("Page: Error fetching telo in getTeloBySlug:", error)
@@ -55,7 +52,6 @@ export default async function TeloPage({ params }: PageProps) {
   return (
     <div className="min-h-screen bg-gray-50">
       <div className="px-4 py-8 mx-auto max-w-4xl">
-        {/* Header */}
         <div className="mb-8">
           <h1 className="text-3xl font-bold text-gray-900">{telo.nombre}</h1>
           <div className="flex items-center gap-4 mt-2">
@@ -73,9 +69,7 @@ export default async function TeloPage({ params }: PageProps) {
         </div>
 
         <div className="grid gap-8 lg:grid-cols-3">
-          {/* Main Content */}
           <div className="lg:col-span-2 space-y-6">
-            {/* Image Gallery */}
             <Card>
               <CardContent className="p-0">
                 <div className="h-64 bg-gray-200 rounded-t-lg">
@@ -94,7 +88,6 @@ export default async function TeloPage({ params }: PageProps) {
               </CardContent>
             </Card>
 
-            {/* Description */}
             <Card>
               <CardContent className="p-6">
                 <h2 className="mb-4 text-xl font-semibold">Descripción</h2>
@@ -105,7 +98,6 @@ export default async function TeloPage({ params }: PageProps) {
               </CardContent>
             </Card>
 
-            {/* Services */}
             <Card>
               <CardContent className="p-6">
                 <h2 className="mb-4 text-xl font-semibold">Servicios</h2>
@@ -124,9 +116,7 @@ export default async function TeloPage({ params }: PageProps) {
             </Card>
           </div>
 
-          {/* Sidebar */}
           <div className="space-y-6">
-            {/* Booking Card */}
             <Card>
               <CardContent className="p-6">
                 <div className="mb-4 text-center">
@@ -151,7 +141,6 @@ export default async function TeloPage({ params }: PageProps) {
               </CardContent>
             </Card>
 
-            {/* Hours */}
             <Card>
               <CardContent className="p-6">
                 <h3 className="mb-3 font-semibold flex items-center gap-2">
@@ -167,7 +156,6 @@ export default async function TeloPage({ params }: PageProps) {
               </CardContent>
             </Card>
 
-            {/* Location */}
             <Card>
               <CardContent className="p-6">
                 <h3 className="mb-3 font-semibold flex items-center gap-2">
