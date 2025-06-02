@@ -1,5 +1,5 @@
 export interface Ciudad {
-  id: number
+  id: string // Cambiado a string para coincidir con la base de datos
   nombre: string
   slug: string
   provincia?: string
@@ -7,7 +7,7 @@ export interface Ciudad {
 }
 
 export interface Telo {
-  id: number // Cambiado de string a number para coincidir con la base de datos
+  id: string // CORRECCIÓN: Cambiado de number a string para coincidir con la base de datos (cuid())
   nombre: string
   slug: string
   direccion: string
@@ -31,7 +31,7 @@ export interface Telo {
 
 export interface Review {
   id: number
-  telo_id: number
+  telo_id: string // Cambiado a string para coincidir con el id de Telo
   usuario_nombre: string
   rating: number
   comentario?: string
@@ -41,6 +41,6 @@ export interface Review {
 export interface Favorito {
   id: number
   usuario_id: string
-  telo_id: number
+  telo_id: string // Cambiado a string para coincidir con el id de Telo
   created_at?: Date
 }
