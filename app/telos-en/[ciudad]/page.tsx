@@ -96,18 +96,13 @@ export default function CiudadPage({ params }: PageProps) {
       setTelos(dbTelos)
       setDataSource("database")
     } else {
-      const n8nTelos = await fetchTelosFromN8n()
-      if (n8nTelos.length > 0) {
-        setTelos(n8nTelos)
-        setDataSource("n8n")
-      } else {
-        const { mockTelos } = await import("@/lib/prisma") // Asumiendo que tienes mockTelos
-        const filteredMockTelos = Array.isArray(mockTelos)
-          ? mockTelos.filter((t) => t.ciudad.toLowerCase().includes(ciudadName.toLowerCase()))
-          : []
-        setTelos(filteredMockTelos)
-        setDataSource("database") // O 'mock'
-      }
+      // Usar mock data local
+      const { mockTelos } = await import("@/lib/models")
+      const filteredMockTelos = Array.isArray(mockTelos)
+        ? mockTelos.filter((t) => t.ciudad.toLowerCase().includes(ciudadName.toLowerCase()))
+        : []
+      setTelos(filteredMockTelos)
+      setDataSource("database")
     }
     setLoading(false)
   }
