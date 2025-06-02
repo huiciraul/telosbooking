@@ -13,9 +13,8 @@ async function getTelos() {
     return []
   }
 
-  const data: Telo[] = await res.json() // La API devuelve directamente el array de telos
-  console.log("TelosPage: Data received from /api/telos:", data.length, "telos")
-  return data || [] // Retorna el array directamente
+  const data = await res.json()
+  return data.telos || []
 }
 
 export default async function TelosPage() {

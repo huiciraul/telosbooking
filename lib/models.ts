@@ -7,7 +7,7 @@ export interface Ciudad {
 }
 
 export interface Telo {
-  id: string // Cambiado de string a number para coincidir con la base de datos
+  id: number // Cambiado de string a number para coincidir con la base de datos
   nombre: string
   slug: string
   direccion: string

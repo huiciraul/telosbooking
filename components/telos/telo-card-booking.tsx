@@ -5,7 +5,7 @@ import { Star, MapPin, Wifi, Car, Waves } from "lucide-react"
 
 interface TeloCardProps {
   telo: {
-    id: string
+    id: number // Cambiado a number
     nombre: string
     slug: string
     direccion: string
