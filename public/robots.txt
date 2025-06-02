@@ -1,0 +1,23 @@
+# https://www.robotstxt.org/robotstxt.html
+User-agent: *
+Disallow: /admin # No indexar el panel de admin
+Disallow: /diagnostico # No indexar la página de diagnóstico
+Disallow: /api/ # No indexar endpoints de API directamente, a menos que alguno específico sea público
+
+# Permitir rastreo de páginas importantes
+Allow: /$
+Allow: /telos-en/
+Allow: /telo/
+Allow: /blog/ # Si tienes blog
+Allow: /telos-cerca-de-mi/
+Allow: /como-funciona/
+Allow: /contacto/
+Allow: /ayuda/
+Allow: /terminos/
+Allow: /privacidad/
+Allow: /experiencias/
+Allow: /servicios/
+Allow: /destinos/
+
+
+Sitemap: https://motelos.vercel.app/sitemap.xml # Reemplaza con tu URL de producción

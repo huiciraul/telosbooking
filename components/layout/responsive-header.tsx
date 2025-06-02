@@ -3,7 +3,7 @@
 import { useState } from "react"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
-import { MapPin, Menu, X } from "lucide-react"
+import { MapPin, Menu, X, Search } from "lucide-react"
 
 export function ResponsiveHeader() {
   const [showMobileMenu, setShowMobileMenu] = useState(false)
@@ -24,7 +24,7 @@ export function ResponsiveHeader() {
             </Link>
 
             {/* Desktop Navigation */}
-            <nav className="hidden md:flex items-center space-x-6">
+            <nav className="hidden lg:flex items-center space-x-6">
               <Link href="/telos" className="text-sm font-medium hover:text-purple-600 transition-colors">
                 Explorar
               </Link>
@@ -36,11 +36,18 @@ export function ResponsiveHeader() {
               </Link>
             </nav>
 
-            {/* Desktop Actions */}
-            <div className="hidden md:flex items-center space-x-3"></div>
+            {/* Desktop Search */}
+            <div className="hidden md:flex items-center space-x-3">
+              <Button variant="ghost" size="sm" className="rounded-full">
+                <Search className="w-4 h-4" />
+              </Button>
+            </div>
 
-            {/* Mobile Actions */}
-            <div className="flex md:hidden items-center space-x-2">
+            {/* Mobile Menu Button */}
+            <div className="flex lg:hidden items-center space-x-2">
+              <Button variant="ghost" size="sm" className="rounded-full">
+                <Search className="w-5 h-5" />
+              </Button>
               <Button
                 variant="ghost"
                 size="sm"
@@ -57,18 +64,30 @@ export function ResponsiveHeader() {
       {/* Mobile Menu */}
       {showMobileMenu && (
         <div
-          className="md:hidden fixed inset-0 z-40 bg-black/20 backdrop-blur-sm"
+          className="lg:hidden fixed inset-0 z-40 bg-black/20 backdrop-blur-sm"
           onClick={() => setShowMobileMenu(false)}
         >
           <div className="absolute top-16 left-0 right-0 bg-white border-b border-purple-100 animate-fade-in">
             <div className="container mx-auto px-4 py-4 space-y-4">
-              <Link href="/telos" className="block py-2 text-sm font-medium hover:text-purple-600">
+              <Link
+                href="/telos"
+                className="block py-2 text-sm font-medium hover:text-purple-600"
+                onClick={() => setShowMobileMenu(false)}
+              >
                 Explorar telos
               </Link>
-              <Link href="/como-funciona" className="block py-2 text-sm font-medium hover:text-purple-600">
+              <Link
+                href="/como-funciona"
+                className="block py-2 text-sm font-medium hover:text-purple-600"
+                onClick={() => setShowMobileMenu(false)}
+              >
                 ¿Cómo funciona?
               </Link>
-              <Link href="/contacto" className="block py-2 text-sm font-medium hover:text-purple-600">
+              <Link
+                href="/contacto"
+                className="block py-2 text-sm font-medium hover:text-purple-600"
+                onClick={() => setShowMobileMenu(false)}
+              >
                 Listar tu motel
               </Link>
               <hr className="my-2" />
