@@ -9,15 +9,32 @@ interface RouteParams {
 export async function GET(request: NextRequest, { params }: RouteParams) {
   console.log("API: Request received for slug:", params.slug)
   try {
-    const query = `
+    let telo: Telo | undefined
+
+    // 1. Intentar búsqueda exacta primero
+    const exactMatchQuery = `
       SELECT * FROM telos 
       WHERE slug = $1 AND activo = true
       LIMIT 1
     `
+    console.log("API: Attempting exact match query:", exactMatchQuery, "with params:", [params.slug])
+    const exactResult = await executeQuery<Telo[]>(exactMatchQuery, [params.slug])
+    telo = exactResult[0]
 
-    console.log("API: Executing query:", query, "with params:", [params.slug])
-    const result = await executeQuery<Telo[]>(query, [params.slug])
-    const telo = result[0]
+    if (!telo) {
+      // 2. Si no se encuentra, intentar búsqueda por slug que comienza con (para slugs con timestamp)
+      const partialMatchQuery = `
+        SELECT * FROM telos 
+        WHERE slug LIKE $1 || '-%' AND activo = true
+        ORDER BY created_at DESC
+        LIMIT 1
+      `
+      console.log("API: Exact match failed. Attempting partial match query:", partialMatchQuery, "with params:", [
+        params.slug,
+      ])
+      const partialResult = await executeQuery<Telo[]>(partialMatchQuery, [params.slug])
+      telo = partialResult[0]
+    }
 
     console.log("API: Raw telo object from DB:", telo) // Log the raw object
 
@@ -26,7 +43,7 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
 
       // Try to find similar slugs for debugging
       const similarSlugs = await executeQuery<{ slug: string }[]>(`SELECT slug FROM telos WHERE slug LIKE $1 LIMIT 5`, [
-        `%${params.slug}%`,
+        `%${params.slug.split("-").slice(0, -1).join("-")}%`, // Search for base slug
       ])
       console.log(
         "API: Similar slugs found:",
