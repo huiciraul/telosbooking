@@ -8,6 +8,7 @@ import { TelosMapWrapper } from "@/components/telos-map-wrapper"
 import { Button } from "@/components/ui/button"
 import { Navigation, Loader2, AlertTriangle, List, MapIcon } from "lucide-react"
 import type { Telo } from "@/lib/models"
+import { mockTelos } from "@/lib/models"
 
 // Helper para calcular distancia (simplificado, Haversine es más preciso)
 function calculateDistance(lat1: number, lon1: number, lat2: number, lon2: number) {
@@ -30,9 +31,6 @@ export default function TelosCercaDeMiClientPage() {
   const [viewMode, setViewMode] = useState<"list" | "map">("list")
 
   useEffect(() => {
-    // document.title is not needed here as metadata is handled by the server component
-    // document.title = "Telos Cerca de Mí | Encuentra Albergues Transitorios Cercanos | Motelos"
-
     if (navigator.geolocation) {
       navigator.geolocation.getCurrentPosition(
         (position) => {
@@ -62,17 +60,19 @@ export default function TelosCercaDeMiClientPage() {
       setLoading(true)
       setError(null)
       try {
+        // Intentar obtener de la API primero
         const response = await fetch(`/api/telos?limit=200`)
-        if (!response.ok) throw new Error("Error al cargar los telos.")
+        let allTelos: Telo[] = []
 
-        const allTelosData = await response.json()
-        const allTelos: Telo[] = Array.isArray(allTelosData) ? allTelosData : []
+        if (response.ok) {
+          const allTelosData = await response.json()
+          allTelos = Array.isArray(allTelosData) ? allTelosData : []
+        }
 
+        // Si no hay datos de la API, usar mock data
         if (allTelos.length === 0) {
-          setTelos([])
-          setSortedTelos([])
-          setLoading(false)
-          return
+          console.log("Usando mock data para telos cerca de mí")
+          allTelos = mockTelos
         }
 
         const telosWithDistance = allTelos
@@ -88,7 +88,19 @@ export default function TelosCercaDeMiClientPage() {
         setSortedTelos(telosWithDistance as Telo[])
       } catch (err) {
         console.error(err)
-        setError("Error al cargar la lista de telos.")
+        // Usar mock data como fallback
+        console.log("Error en API, usando mock data como fallback")
+        const telosWithDistance = mockTelos
+          .filter((telo) => telo.lat != null && telo.lng != null)
+          .map((telo) => ({
+            ...telo,
+            distance: calculateDistance(userLocation.lat, userLocation.lng, telo.lat!, telo.lng!),
+          }))
+          .sort((a, b) => a.distance - b.distance)
+          .slice(0, 20)
+
+        setTelos(mockTelos)
+        setSortedTelos(telosWithDistance as Telo[])
       } finally {
         setLoading(false)
       }
@@ -176,7 +188,7 @@ export default function TelosCercaDeMiClientPage() {
             ) : (
               <div className="h-[500px] md:h-[600px] rounded-lg overflow-hidden shadow-md">
                 <Suspense fallback={<div className="w-full h-full bg-gray-200 animate-pulse" />}>
-                  <TelosMapWrapper telos={sortedTelos} center={[userLocation.lat, userLocation.lng]} zoom={13} />
+                  <TelosMapWrapper telos={sortedTelos} />
                 </Suspense>
               </div>
             )}

@@ -5,9 +5,10 @@ import Link from "next/link"
 import { Card } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { MapPin, TrendingUp, Users } from "lucide-react"
+import { mockCiudades } from "@/lib/models"
 
 interface Ciudad {
-  id: number
+  id: number | string
   nombre: string
   slug: string
   provincia?: string
@@ -27,21 +28,22 @@ export function PopularDestinations() {
           const data = await response.json()
           // Asegurar que data.data es un array
           const ciudadesArray = Array.isArray(data.data) ? data.data.slice(0, 6) : []
-          setDestinations(ciudadesArray)
+
+          if (ciudadesArray.length > 0) {
+            setDestinations(ciudadesArray)
+          } else {
+            // Usar mock data si no hay datos de la API
+            console.log("No hay datos de ciudades de la API, usando mock data")
+            setDestinations(mockCiudades)
+          }
         } else {
           throw new Error("Error fetching ciudades")
         }
       } catch (error) {
         console.error("Error fetching ciudades:", error)
         // Fallback a datos estáticos
-        setDestinations([
-          { id: 1, nombre: "Buenos Aires", slug: "buenos-aires", provincia: "Buenos Aires", total_telos: 150 },
-          { id: 2, nombre: "Córdoba", slug: "cordoba", provincia: "Córdoba", total_telos: 45 },
-          { id: 3, nombre: "Rosario", slug: "rosario", provincia: "Santa Fe", total_telos: 32 },
-          { id: 4, nombre: "Mendoza", slug: "mendoza", provincia: "Mendoza", total_telos: 28 },
-          { id: 5, nombre: "La Plata", slug: "la-plata", provincia: "Buenos Aires", total_telos: 25 },
-          { id: 6, nombre: "Mar del Plata", slug: "mar-del-plata", provincia: "Buenos Aires", total_telos: 22 },
-        ])
+        console.log("Usando mock data como fallback para ciudades")
+        setDestinations(mockCiudades)
       } finally {
         setLoading(false)
       }

@@ -2,7 +2,7 @@ import { z } from "zod"
 
 // Definición del esquema para un Telo, usado para validación y tipado
 export const teloSchema = z.object({
-  id: z.string(), // Asegúrate de que el ID sea un string para coincidir con la base de datos (cuid())
+  id: z.string(),
   nombre: z.string().min(1, "El nombre es requerido."),
   slug: z.string().min(1, "El slug es requerido."),
   direccion: z.string().min(1, "La dirección es requerida."),
@@ -28,7 +28,7 @@ export type Telo = z.infer<typeof teloSchema>
 // Esquema específico para los datos que vienen de n8n
 export const n8nTeloSchema = z.object({
   nombre: z.string().min(1),
-  slug: z.string().optional(), // n8n puede enviarlo, pero lo generaremos nosotros
+  slug: z.string().optional(),
   direccion: z.string().min(1),
   ciudad: z.string().min(1),
   precio: z.number().nullable().default(0),
@@ -45,11 +45,11 @@ export const n8nTeloSchema = z.object({
 
 export type N8nTelo = z.infer<typeof n8nTeloSchema>
 
-// Esquema para la búsqueda de telos - AGREGADO
+// Esquema para la búsqueda de telos
 export const searchTelosSchema = z.object({
   ciudad: z.string().optional(),
   barrio: z.string().optional(),
-  amenities: z.string().optional(), // Servicios separados por coma
+  amenities: z.string().optional(),
   precio_min: z.string().optional(),
   precio_max: z.string().optional(),
   limit: z.string().optional(),
@@ -67,7 +67,7 @@ export type CiudadSearch = z.infer<typeof ciudadSearchSchema>
 
 // Definición de la interfaz Ciudad
 export interface Ciudad {
-  id: string // Cambiado a string para coincidir con la base de datos
+  id: string
   nombre: string
   slug: string
   provincia?: string
@@ -79,7 +79,7 @@ export interface Ciudad {
 // Definición de la interfaz Review
 export interface Review {
   id: number
-  telo_id: string // Cambiado a string para coincidir con el id de Telo
+  telo_id: string
   usuario_nombre: string
   rating: number
   comentario?: string
@@ -90,12 +90,12 @@ export interface Review {
 export interface Favorito {
   id: number
   usuario_id: string
-  telo_id: string // Cambiado a string para coincidir con el id de Telo
+  telo_id: string
   created_at?: Date
 }
 
-// Mock data para fallback
-export const mockTelos = [
+// Mock data para fallback y desarrollo
+export const mockTelos: Telo[] = [
   {
     id: "1",
     nombre: "Hotel Palermo Premium",
@@ -162,6 +162,72 @@ export const mockTelos = [
     created_at: new Date().toISOString(),
     updated_at: new Date().toISOString(),
   },
+  {
+    id: "4",
+    nombre: "Hotel Córdoba Centro",
+    slug: "hotel-cordoba-centro",
+    direccion: "San Martín 150",
+    ciudad: "Córdoba",
+    precio: 2500,
+    telefono: "0351-422-3456",
+    servicios: ["WiFi", "Frigobar"],
+    descripcion:
+      "Hotel céntrico en Córdoba con todas las comodidades para una estadía perfecta. Ubicado en el corazón de la ciudad, ofrece fácil acceso a los principales puntos de interés.",
+    rating: 4.0,
+    imagen_url: "https://images.unsplash.com/photo-1566073771259-6a8506099945?q=80&w=400&auto=format&fit=crop",
+    lat: -31.4201,
+    lng: -64.1888,
+    activo: true,
+    verificado: true,
+    fuente: "manual",
+    fecha_scraping: new Date().toISOString(),
+    created_at: new Date().toISOString(),
+    updated_at: new Date().toISOString(),
+  },
+  {
+    id: "5",
+    nombre: "Albergue Rosario",
+    slug: "albergue-rosario",
+    direccion: "Pellegrini 1200",
+    ciudad: "Rosario",
+    precio: 2200,
+    telefono: "0341-455-7890",
+    servicios: ["WiFi", "Estacionamiento"],
+    descripcion:
+      "Albergue moderno en Rosario con excelente ubicación y servicios de calidad. Perfecto para una escapada romántica en la ciudad del río.",
+    rating: 4.3,
+    imagen_url: "https://images.unsplash.com/photo-1590490360182-c33d57733427?q=80&w=400&auto=format&fit=crop",
+    lat: -32.9468,
+    lng: -60.6393,
+    activo: true,
+    verificado: true,
+    fuente: "manual",
+    fecha_scraping: new Date().toISOString(),
+    created_at: new Date().toISOString(),
+    updated_at: new Date().toISOString(),
+  },
+  {
+    id: "6",
+    nombre: "Motel Mendoza",
+    slug: "motel-mendoza",
+    direccion: "Av. San Martín 500",
+    ciudad: "Mendoza",
+    precio: 3200,
+    telefono: "0261-123-4567",
+    servicios: ["WiFi", "Estacionamiento", "Aire Acondicionado"],
+    descripcion:
+      "Motel con vista a la montaña en Mendoza. Ambiente romántico con todas las comodidades para una experiencia inolvidable.",
+    rating: 4.1,
+    imagen_url: "https://images.unsplash.com/photo-1566073771259-6a8506099945?q=80&w=400&auto=format&fit=crop",
+    lat: -32.8895,
+    lng: -68.8458,
+    activo: true,
+    verificado: true,
+    fuente: "manual",
+    fecha_scraping: new Date().toISOString(),
+    created_at: new Date().toISOString(),
+    updated_at: new Date().toISOString(),
+  },
 ]
 
 export const mockCiudades = [
@@ -188,5 +254,29 @@ export const mockCiudades = [
     provincia: "Santa Fe",
     busquedas: 67,
     total_telos: 18,
+  },
+  {
+    id: "4",
+    nombre: "Mendoza",
+    slug: "mendoza",
+    provincia: "Mendoza",
+    busquedas: 45,
+    total_telos: 12,
+  },
+  {
+    id: "5",
+    nombre: "La Plata",
+    slug: "la-plata",
+    provincia: "Buenos Aires",
+    busquedas: 34,
+    total_telos: 8,
+  },
+  {
+    id: "6",
+    nombre: "Mar del Plata",
+    slug: "mar-del-plata",
+    provincia: "Buenos Aires",
+    busquedas: 28,
+    total_telos: 6,
   },
 ]

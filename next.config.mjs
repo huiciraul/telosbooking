@@ -1,4 +1,3 @@
-// next.config.mjs
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   eslint: {
@@ -10,7 +9,6 @@ const nextConfig = {
   images: {
     unoptimized: true,
   },
-  // Puedes añadir otras configuraciones de Next.js aquí si las tienes
 };
 
 export default nextConfig;

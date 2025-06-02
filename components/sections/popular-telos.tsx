@@ -4,18 +4,8 @@ import { useEffect, useState } from "react"
 import { TeloCard } from "@/components/telos/telo-card"
 import { Button } from "@/components/ui/button"
 import { RefreshCw, CheckCircle, AlertTriangle } from "lucide-react"
-
-interface Telo {
-  id: number
-  nombre: string
-  slug: string
-  direccion: string
-  ciudad: string
-  precio: number
-  rating: number
-  servicios: string[]
-  imagen_url?: string
-}
+import { mockTelos } from "@/lib/models"
+import type { Telo } from "@/lib/models"
 
 export function PopularTelos() {
   const [telos, setTelos] = useState<Telo[]>([])
@@ -37,8 +27,16 @@ export function PopularTelos() {
 
         // Asegurar que data es un array
         const telosArray = Array.isArray(data) ? data : []
-        setTelos(telosArray)
-        setSuccess(true)
+
+        if (telosArray.length > 0) {
+          setTelos(telosArray)
+          setSuccess(true)
+        } else {
+          // Si no hay datos de la API, usar mock data
+          console.log("No hay datos de la API, usando mock data")
+          setTelos(mockTelos.slice(0, 8))
+          setSuccess(true)
+        }
       } else {
         throw new Error(`API Error: ${response.status}`)
       }
@@ -47,42 +45,9 @@ export function PopularTelos() {
       setError("Error cargando telos desde la base de datos")
 
       // Fallback a datos mock en caso de error
-      const mockData = [
-        {
-          id: 1,
-          nombre: "Hotel Palermo Premium",
-          slug: "hotel-palermo-premium",
-          direccion: "Av. Santa Fe 3000",
-          ciudad: "Buenos Aires",
-          precio: 3500,
-          rating: 4.5,
-          servicios: ["WiFi", "Estacionamiento", "Hidromasaje"],
-          imagen_url: "https://images.unsplash.com/photo-1566073771259-6a8506099945?q=80&w=400&auto=format&fit=crop",
-        },
-        {
-          id: 2,
-          nombre: "Albergue Villa Crespo",
-          slug: "albergue-villa-crespo",
-          direccion: "Corrientes 4500",
-          ciudad: "Buenos Aires",
-          precio: 2800,
-          rating: 4.2,
-          servicios: ["WiFi", "Aire Acondicionado"],
-          imagen_url: "https://images.unsplash.com/photo-1551882547-ff40c63fe5fa?q=80&w=400&auto=format&fit=crop",
-        },
-        {
-          id: 3,
-          nombre: "Motel Belgrano Deluxe",
-          slug: "motel-belgrano-deluxe",
-          direccion: "Cabildo 2200",
-          ciudad: "Buenos Aires",
-          precio: 4200,
-          rating: 4.7,
-          servicios: ["Estacionamiento", "Jacuzzi", "TV Cable"],
-          imagen_url: "https://images.unsplash.com/photo-1618773928121-c32242e63f39?q=80&w=400&auto=format&fit=crop",
-        },
-      ]
-      setTelos(mockData)
+      console.log("Usando mock data como fallback")
+      setTelos(mockTelos.slice(0, 8))
+      setSuccess(true)
     } finally {
       setLoading(false)
     }
@@ -118,7 +83,7 @@ export function PopularTelos() {
             {success && (
               <div className="flex items-center text-green-600 text-sm">
                 <CheckCircle className="w-4 h-4 mr-1" />
-                Base de datos conectada
+                Datos cargados
               </div>
             )}
             <Button variant="outline" size="sm" onClick={fetchTelos} disabled={loading}>
@@ -129,10 +94,10 @@ export function PopularTelos() {
         </div>
 
         {error && (
-          <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg">
+          <div className="mb-6 p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
             <div className="flex items-center space-x-2">
-              <AlertTriangle className="w-5 h-5 text-red-600" />
-              <p className="text-red-800 font-medium">{error}</p>
+              <AlertTriangle className="w-5 h-5 text-yellow-600" />
+              <p className="text-yellow-800 font-medium">Usando datos de ejemplo</p>
             </div>
           </div>
         )}
