@@ -1,114 +1,102 @@
 import Link from "next/link"
+import { Facebook, Instagram, Twitter } from "lucide-react"
 import Image from "next/image"
-import { MapPin, Mail, Phone, Facebook, Twitter, Instagram } from "lucide-react"
 
 export function Footer() {
   return (
-    <footer className="bg-gray-900 text-white">
-      <div className="container mx-auto px-4 py-12">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
-          {/* Brand */}
-          <div className="space-y-4">
-            <Link href="/" className="inline-block">
-              <Image src="/logo.png" alt="Motelo Logo" width={120} height={36} />
-            </Link>
-            <p className="text-sm text-gray-400">
-              La plataforma más completa para encontrar y reservar telos en Argentina. Comparamos precios y servicios
-              para que encuentres la mejor opción.
-            </p>
-            <div className="flex space-x-4">
-              <a href="#" className="text-gray-400 hover:text-blue-400 transition-colors">
-                <Facebook className="w-5 h-5" />
-              </a>
-              <a href="#" className="text-gray-400 hover:text-blue-400 transition-colors">
-                <Twitter className="w-5 h-5" />
-              </a>
-              <a href="#" className="text-gray-400 hover:text-blue-400 transition-colors">
-                <Instagram className="w-5 h-5" />
-              </a>
-            </div>
-          </div>
-
-          {/* Quick Links */}
-          <div>
-            <h3 className="text-lg font-semibold mb-4">Enlaces rápidos</h3>
-            <ul className="space-y-2 text-sm">
-              <li>
-                <Link href="/buscar" className="text-gray-400 hover:text-white transition-colors">
-                  Buscar telos
-                </Link>
-              </li>
-              <li>
-                <Link href="/destinos" className="text-gray-400 hover:text-white transition-colors">
-                  Destinos populares
-                </Link>
-              </li>
-              <li>
-                <Link href="/funciona" className="text-gray-400 hover:text-white transition-colors">
-                  ¿Cómo funciona?
-                </Link>
-              </li>
-              <li>
-                <Link href="/contacto" className="text-gray-400 hover:text-white transition-colors">
-                  Listar tu motel
-                </Link>
-              </li>
-            </ul>
-          </div>
-
-          {/* Support */}
-          <div>
-            <h3 className="text-lg font-semibold mb-4">Soporte</h3>
-            <ul className="space-y-2 text-sm">
-              <li>
-                <Link href="/ayuda" className="text-gray-400 hover:text-white transition-colors">
-                  Centro de ayuda
-                </Link>
-              </li>
-              <li>
-                <Link href="/contacto" className="text-gray-400 hover:text-white transition-colors">
-                  Contactanos
-                </Link>
-              </li>
-              <li>
-                <Link href="/terminos-condiciones" className="text-gray-400 hover:text-white transition-colors">
-                  Términos de uso
-                </Link>
-              </li>
-              <li>
-                <Link href="/privacidad" className="text-gray-400 hover:text-white transition-colors">
-                  Política de privacidad
-                </Link>
-              </li>
-            </ul>
-          </div>
-
-          {/* Contact */}
-          <div>
-            <h3 className="text-lg font-semibold mb-4">Contacto</h3>
-            <ul className="space-y-3 text-sm">
-              <li className="flex items-center space-x-2 text-gray-400">
-                <Mail className="w-4 h-4" />
-                <span>info@telosbooking.com</span>
-              </li>
-              <li className="flex items-center space-x-2 text-gray-400">
-                <Phone className="w-4 h-4" />
-                <span>+54 11 1234-5678</span>
-              </li>
-              <li className="flex items-start space-x-2 text-gray-400">
-                <MapPin className="w-4 h-4 mt-0.5" />
-                <span>Buenos Aires, Argentina</span>
-              </li>
-            </ul>
-          </div>
-        </div>
-
-        <div className="border-t border-gray-800 mt-8 pt-8 text-center">
-          <p className="text-sm text-gray-400">
-            © 2024 Motelos. Todos los derechos reservados.
-            <span className="ml-2 text-blue-400">Powered by n8n + AI</span>
+    <footer className="border-t bg-gray-100 py-8">
+      <div className="container grid grid-cols-1 gap-8 md:grid-cols-4">
+        <div className="space-y-4">
+          <Link href="/" className="flex items-center space-x-2">
+            <Image
+              src="/logo.png"
+              alt="Motelo Logo"
+              width={120} // Adjust width as needed
+              height={36} // Adjust height as needed
+              priority
+            />
+          </Link>
+          <p className="text-sm text-gray-600">
+            Tu guía definitiva para encontrar los mejores albergues transitorios y telos en Argentina.
           </p>
+          <div className="flex space-x-4">
+            <Link href="#" className="text-gray-600 hover:text-gray-900">
+              <Facebook className="h-5 w-5" />
+            </Link>
+            <Link href="#" className="text-gray-600 hover:text-gray-900">
+              <Instagram className="h-5 w-5" />
+            </Link>
+            <Link href="#" className="text-gray-600 hover:text-gray-900">
+              <Twitter className="h-5 w-5" />
+            </Link>
+          </div>
         </div>
+
+        <div className="space-y-2">
+          <h3 className="text-lg font-semibold">Navegación</h3>
+          <ul className="space-y-1 text-sm text-gray-600">
+            <li>
+              <Link href="/como-funciona" className="hover:underline">
+                Cómo Funciona
+              </Link>
+            </li>
+            <li>
+              <Link href="/destinos" className="hover:underline">
+                Destinos
+              </Link>
+            </li>
+            <li>
+              <Link href="/servicios" className="hover:underline">
+                Servicios
+              </Link>
+            </li>
+            <li>
+              <Link href="/experiencias" className="hover:underline">
+                Experiencias
+              </Link>
+            </li>
+          </ul>
+        </div>
+
+        <div className="space-y-2">
+          <h3 className="text-lg font-semibold">Legal</h3>
+          <ul className="space-y-1 text-sm text-gray-600">
+            <li>
+              <Link href="/terminos" className="hover:underline">
+                Términos y Condiciones
+              </Link>
+            </li>
+            <li>
+              <Link href="/privacidad" className="hover:underline">
+                Política de Privacidad
+              </Link>
+            </li>
+          </ul>
+        </div>
+
+        <div className="space-y-2">
+          <h3 className="text-lg font-semibold">Ayuda</h3>
+          <ul className="space-y-1 text-sm text-gray-600">
+            <li>
+              <Link href="/ayuda" className="hover:underline">
+                Preguntas Frecuentes
+              </Link>
+            </li>
+            <li>
+              <Link href="/contacto" className="hover:underline">
+                Contacto
+              </Link>
+            </li>
+            <li>
+              <Link href="/contacto#listar-motel" className="hover:underline">
+                Listar tu Motel
+              </Link>
+            </li>
+          </ul>
+        </div>
+      </div>
+      <div className="mt-8 text-center text-sm text-gray-500">
+        &copy; {new Date().getFullYear()} Motelos. Todos los derechos reservados.
       </div>
     </footer>
   )

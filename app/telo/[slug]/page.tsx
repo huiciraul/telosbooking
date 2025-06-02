@@ -1,26 +1,10 @@
 import type React from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
-import {
-  MapPin,
-  Star,
-  Phone,
-  Clock,
-  Wifi,
-  Car,
-  Waves,
-  Navigation,
-  ExternalLink,
-  ImageIcon,
-  ShieldCheck,
-  DollarSign,
-} from "lucide-react"
+import { MapPin, Star, Wifi, Car, Waves, ImageIcon, ShieldCheck, DollarSign } from "lucide-react"
 import { TelosMapWrapper } from "@/components/telos-map-wrapper"
 import { ResponsiveHeader } from "@/components/layout/responsive-header"
-import { Footer } from "@/components/layout/footer"
 import type { Telo } from "@/lib/models"
-import { Suspense } from "react"
 import type { Metadata, ResolvingMetadata } from "next"
 import { prisma } from "@/lib/prisma" // Now correctly imported
 import { Shell } from "@/components/shell" // Now correctly imported
@@ -172,6 +156,8 @@ export default async function TeloPage({ params }: PageProps) {
     url: `${process.env.NEXT_PUBLIC_SITE_URL || "https://motelos.vercel.app"}/telo/${telo.slug}`,
   }
 
+  const currentTelo = telo
+
   return (
     <Shell layout="default">
       {" "}
@@ -192,7 +178,7 @@ export default async function TeloPage({ params }: PageProps) {
           </div>
           {/* Example usage of EditTeloButton - this might be admin-only */}
           {telo.id !== "fallback" && ( // Don't show edit for fallback
-            <EditTeloButton telo={telo} />
+            <EditTeloButton teloSlug={telo.slug} />
           )}
         </div>
 
@@ -281,111 +267,17 @@ export default async function TeloPage({ params }: PageProps) {
             </Card>
           </div>
 
-          <div className="lg:sticky lg:top-20 space-y-6 self-start">
-            <Card className="shadow-lg">
-              <CardHeader className="pb-2">
-                <CardTitle className="text-xl text-center">Información y Contacto</CardTitle>
-              </CardHeader>
-              <CardContent className="text-center">
-                {precio ? (
-                  <div className="mb-4">
-                    <p className="text-sm text-gray-500">Precio por turno desde</p>
-                    <p className="text-4xl font-bold text-purple-600">${precio}</p>
-                  </div>
-                ) : (
-                  <div className="mb-4 p-3 bg-yellow-50 border border-yellow-200 rounded-md">
-                    <p className="text-lg font-semibold text-yellow-700">Consultar Precio</p>
-                    <p className="text-sm text-yellow-600">Llama para conocer tarifas y disponibilidad.</p>
-                  </div>
-                )}
-
-                <div className="space-y-3">
-                  {telefono ? (
-                    <>
-                      <Button asChild className="w-full gradient-primary text-white">
-                        <a href={`tel:${telefono}`}>
-                          <Phone className="w-5 h-5 mr-2" /> Llamar Ahora
-                        </a>
-                      </Button>
-                      <p className="text-lg font-semibold text-purple-600">{telefono}</p>
-                    </>
-                  ) : (
-                    <Button asChild className="w-full bg-blue-600 hover:bg-blue-700 text-white">
-                      <a href={googleMapsUrl} target="_blank" rel="noopener noreferrer">
-                        <Navigation className="w-5 h-5 mr-2" /> Ver en Google Maps
-                      </a>
-                    </Button>
-                  )}
-                  <Button asChild variant="outline" className="w-full">
-                    <a
-                      href={`https://wa.me/?text=Hola, quisiera consultar sobre ${telo.nombre} en ${telo.ciudad}. Link: ${process.env.NEXT_PUBLIC_SITE_URL || "https://motelos.vercel.app"}/telo/${telo.slug}`}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                    >
-                      <svg
-                        xmlns="http://www.w3.org/2000/svg"
-                        width="18"
-                        height="18"
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        stroke="currentColor"
-                        strokeWidth="2"
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        className="mr-2"
-                      >
-                        <path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8.3 8.5z"></path>
-                      </svg>
-                      Consultar por WhatsApp
-                    </a>
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
-            <Card>
-              <CardHeader className="pb-2">
-                <CardTitle className="text-lg flex items-center">
-                  <Clock className="w-5 h-5 mr-2 text-purple-600" />
-                  Horarios
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="flex justify-between text-sm">
-                  <span>Lunes - Domingo:</span>
-                  <span className="font-medium text-green-600">Abierto 24 horas</span>
-                </div>
-                <p className="text-xs text-gray-500 mt-1">
-                  La mayoría de los albergues transitorios operan continuamente.
-                </p>
-              </CardContent>
-            </Card>
-            <Card>
-              <CardHeader className="pb-2">
-                <CardTitle className="text-lg flex items-center">
-                  <MapPin className="w-5 h-5 mr-2 text-purple-600" />
-                  Ubicación
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <p className="text-sm text-gray-700 mb-3">
-                  {telo.direccion}, {telo.ciudad}
-                </p>
-                <div className="h-48 bg-gray-100 rounded-lg mb-3 overflow-hidden">
-                  <Suspense fallback={<div className="w-full h-full bg-gray-200 animate-pulse" />}>
-                    <TelosMapWrapper telo={telo} />
-                  </Suspense>
-                </div>
-                <Button asChild variant="outline" className="w-full" size="sm">
-                  <a href={googleMapsUrl} target="_blank" rel="noopener noreferrer">
-                    <ExternalLink className="w-4 h-4 mr-2" /> Abrir en Google Maps
-                  </a>
-                </Button>
-              </CardContent>
-            </Card>
+          <div className="md:sticky md:top-20 h-[400px] md:h-[600px] w-full rounded-lg overflow-hidden shadow-lg">
+            {currentTelo.lat && currentTelo.lng ? (
+              <TelosMapWrapper telo={currentTelo} />
+            ) : (
+              <div className="flex items-center justify-center h-full bg-gray-100 text-gray-500">
+                Ubicación del telo no disponible en el mapa.
+              </div>
+            )}
           </div>
         </div>
       </div>
-      <Footer />
     </Shell>
   )
 }
