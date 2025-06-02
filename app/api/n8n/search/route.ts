@@ -1,5 +1,8 @@
 import { type NextRequest, NextResponse } from "next/server"
 import { z } from "zod"
+import { executeQuery } from "@/lib/db"
+import { n8nTeloSchema } from "@/lib/validators/telo-schema"
+import { generateSlug } from "@/utils/generate-slug"
 
 const searchSchema = z.object({
   ciudad: z.string().min(1),
@@ -10,57 +13,169 @@ export async function POST(request: NextRequest) {
     const body = await request.json()
     const { ciudad } = searchSchema.parse(body)
 
-    const webhookUrl = "https://huiciraul.app.n8n.cloud/webhook/buscar-tipos"
+    console.log(`🔍 Iniciando búsqueda y persistencia para: ${ciudad}`)
+
+    // URL del webhook de n8n (configurable via env)
+    const n8nWebhookUrl = "https://huiciraul.app.n8n.cloud/webhook/buscar-tipos"
+    const n8nWebhookToken = process.env.N8N_WEBHOOK_TOKEN // Usar el token si está configurado
 
     const payload = { ciudad }
 
-    const response = await fetch(webhookUrl, {
+    console.log("📤 Enviando payload a n8n webhook:", payload)
+
+    const n8nResponse = await fetch(n8nWebhookUrl, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
+        ...(n8nWebhookToken ? { Authorization: `Bearer ${n8nWebhookToken}` } : {}),
       },
       body: JSON.stringify(payload),
     })
 
-    if (!response.ok) {
-      throw new Error(`Error en n8n: ${response.status} ${response.statusText}`)
+    if (!n8nResponse.ok) {
+      const errorText = await n8nResponse.text()
+      throw new Error(`Error en n8n webhook: ${n8nResponse.status} ${n8nResponse.statusText} - ${errorText}`)
     }
 
-    const data = await response.json()
+    const rawTelosData = await n8nResponse.json()
+    console.log(`📥 Recibidos ${rawTelosData.length} telos de n8n webhook. Iniciando persistencia...`)
 
-    // La respuesta ya es un array plano de telos
-    const telosLimpios = (Array.isArray(data) ? data : []).map((telo: any) => ({
-      id: telo.slug || `temp-${Date.now()}-${Math.random()}`,
-      nombre: telo.nombre?.replace(/["']/g, "") || "Sin nombre",
-      slug: telo.slug || telo.nombre?.toLowerCase().replace(/[^a-z0-9]+/g, "-"),
-      direccion: telo.direccion || "Dirección no disponible",
-      ciudad: telo.ciudad?.replace(/^W\d+\s+/, "") || ciudad,
-      precio: telo.precio ?? Math.floor(Math.random() * 3000) + 2000,
-      telefono: telo.telefono || null,
-      servicios: telo.servicios?.length > 0 ? telo.servicios : ["WiFi", "Estacionamiento"],
-      descripcion: telo.descripcion || `${telo.nombre} ubicado en ${telo.direccion}`,
-      rating: telo.rating ?? (Math.random() * 2 + 3).toFixed(1),
-      imagen_url: telo.imagen_url || null,
-      lat: telo.lat ?? null,
-      lng: telo.lng ?? null,
-      activo: true,
-      verificado: false,
-      fuente: "n8n-direct",
-    }))
+    const persistedTelos = []
+    const results = {
+      insertados: 0,
+      actualizados: 0,
+      descartados: 0,
+      errores: 0,
+    }
 
+    for (const [index, teloData] of rawTelosData.entries()) {
+      try {
+        // Limpiar y normalizar datos antes de validar
+        const cleanedData = {
+          ...teloData,
+          ciudad: teloData.ciudad?.replace(/^W\d+\s+/, "") || teloData.ciudad,
+          precio: teloData.precio ?? Math.floor(Math.random() * 3000) + 2000,
+          servicios: teloData.servicios?.length > 0 ? teloData.servicios : ["WiFi", "Estacionamiento"],
+          slug: undefined, // Asegurar que el slug se genere por nuestra función
+        }
+
+        const validatedTelo = n8nTeloSchema.parse(cleanedData)
+        const slug = generateSlug(validatedTelo.nombre, true) // Siempre añadir timestamp para unicidad
+
+        const existingTelo = await executeQuery<any[]>(
+          `SELECT id, nombre, direccion, precio, updated_at, slug FROM telos 
+           WHERE LOWER(nombre) = LOWER($1) AND LOWER(direccion) = LOWER($2) 
+           LIMIT 1`,
+          [validatedTelo.nombre, validatedTelo.direccion],
+        )
+
+        let currentTelo
+        if (existingTelo.length > 0) {
+          const existing = existingTelo[0]
+          const hasChanges =
+            existing.precio !== (validatedTelo.precio || 0) ||
+            existing.nombre !== validatedTelo.nombre ||
+            existing.direccion !== validatedTelo.direccion
+
+          if (hasChanges) {
+            const [updatedTelo] = await executeQuery(
+              `
+              UPDATE telos SET
+                precio = $1,
+                telefono = $2,
+                servicios = $3,
+                descripcion = $4,
+                rating = $5,
+                imagen_url = $6,
+                lat = $7,
+                lng = $8,
+                updated_at = CURRENT_TIMESTAMP,
+                fecha_scraping = $9
+              WHERE id = $10
+              RETURNING *
+            `,
+              [
+                validatedTelo.precio || existing.precio,
+                validatedTelo.telefono || null,
+                validatedTelo.servicios,
+                validatedTelo.descripcion || null,
+                validatedTelo.rating || existing.rating,
+                validatedTelo.imagen_url || null,
+                validatedTelo.lat || null,
+                validatedTelo.lng || null,
+                validatedTelo.fecha_scraping
+                  ? new Date(validatedTelo.fecha_scraping).toISOString()
+                  : new Date().toISOString(),
+                existing.id,
+              ],
+            )
+            currentTelo = updatedTelo
+            results.actualizados++
+            console.log(`✏️ Telo actualizado: ${validatedTelo.nombre}`)
+          } else {
+            currentTelo = existing
+            results.descartados++
+          }
+        } else {
+          const insertQuery = `
+            INSERT INTO telos (
+              nombre, slug, direccion, ciudad, precio, telefono, 
+              servicios, descripcion, rating, imagen_url, lat, lng, 
+              activo, verificado, fuente, fecha_scraping
+            ) 
+            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, true, false, $13, $14)
+            RETURNING *
+          `
+
+          const params = [
+            validatedTelo.nombre,
+            slug,
+            validatedTelo.direccion,
+            validatedTelo.ciudad,
+            validatedTelo.precio || 0,
+            validatedTelo.telefono || null,
+            validatedTelo.servicios,
+            validatedTelo.descripcion || null,
+            validatedTelo.rating || 0,
+            validatedTelo.imagen_url || null,
+            validatedTelo.lat || null,
+            validatedTelo.lng || null,
+            validatedTelo.fuente || "n8n-search", // Fuente para este endpoint
+            validatedTelo.fecha_scraping
+              ? new Date(validatedTelo.fecha_scraping).toISOString()
+              : new Date().toISOString(),
+          ]
+
+          const [newTelo] = await executeQuery<any[]>(insertQuery, params)
+          currentTelo = newTelo
+          results.insertados++
+          console.log(`✅ Nuevo telo insertado: ${validatedTelo.nombre} (ID: ${newTelo.id})`)
+        }
+        if (currentTelo) {
+          persistedTelos.push(currentTelo)
+        }
+      } catch (validationError) {
+        results.errores++
+        console.error(`❌ Error procesando telo ${index + 1}:`, validationError)
+      }
+    }
+
+    console.log(
+      `📊 Búsqueda y persistencia completada: ${results.insertados} insertados, ${results.actualizados} actualizados, ${results.descartados} descartados, ${results.errores} errores`,
+    )
 
     return NextResponse.json({
       success: true,
-      telos: telosLimpios,
-      total: telosLimpios.length,
-      fuente: "n8n-direct",
+      telos: persistedTelos, // Devolver los telos ya persistidos con sus slugs correctos
+      total: persistedTelos.length,
+      fuente: "n8n-persisted",
       timestamp: new Date().toISOString(),
     })
   } catch (error: any) {
-    console.error("❌ Error buscando en n8n:", error)
+    console.error("❌ Error en /api/n8n/search:", error)
     return NextResponse.json(
       {
-        error: "Error buscando telos en n8n",
+        error: "Error interno del servidor al buscar y persistir telos",
         details: error instanceof Error ? error.message : String(error),
       },
       { status: 500 },

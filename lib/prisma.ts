@@ -20,7 +20,7 @@ if (process.env.NODE_ENV !== "production") globalForPrisma.prisma = prisma
 
 export const mockTelos = [
   {
-    id: 1, // Cambiado a number
+    id: "1", // Cambiado a number
     nombre: "Hotel Palermo",
     slug: "hotel-palermo",
     direccion: "Av. Santa Fe 3000",
@@ -35,7 +35,7 @@ export const mockTelos = [
     updatedAt: new Date(),
   },
   {
-    id: 2, // Cambiado a number
+    id: "2", // Cambiado a number
     nombre: "Albergue Villa Crespo",
     slug: "albergue-villa-crespo",
     direccion: "Corrientes 4500",
@@ -50,7 +50,7 @@ export const mockTelos = [
     updatedAt: new Date(),
   },
   {
-    id: 3, // Cambiado a number
+    id: "3", // Cambiado a number
     nombre: "Motel Belgrano",
     slug: "motel-belgrano",
     direccion: "Cabildo 2200",
@@ -65,7 +65,7 @@ export const mockTelos = [
     updatedAt: new Date(),
   },
   {
-    id: 4, // Cambiado a number
+    id: "4", // Cambiado a number
     nombre: "Hotel Córdoba Centro",
     slug: "hotel-cordoba-centro",
     direccion: "San Martín 150",
@@ -80,7 +80,7 @@ export const mockTelos = [
     updatedAt: new Date(),
   },
   {
-    id: 5, // Cambiado a number
+    id: "5", // Cambiado a number
     nombre: "Albergue Rosario",
     slug: "albergue-rosario",
     direccion: "Pellegrini 1200",

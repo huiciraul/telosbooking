@@ -10,13 +10,23 @@ interface PageProps {
 
 async function getTeloBySlug(slug: string) {
   console.log("Page: Fetching telo with slug:", slug)
-  const baseUrl = process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : "http://localhost:3000"
+
+  // Fix URL construction for production
+  const baseUrl = process.env.NEXT_PUBLIC_VERCEL_URL
+    ? `https://${process.env.NEXT_PUBLIC_VERCEL_URL}`
+    : process.env.VERCEL_URL
+      ? `https://${process.env.VERCEL_URL}`
+      : "http://localhost:3000"
+
   console.log("Page: Base URL:", baseUrl)
 
   try {
     console.log("Page: Fetching from URL:", `${baseUrl}/api/telo/${slug}`)
     const res = await fetch(`${baseUrl}/api/telo/${slug}`, {
       next: { revalidate: 3600 },
+      headers: {
+        "Cache-Control": "no-cache",
+      },
     })
     console.log("Page: API response status:", res.status, res.statusText)
 

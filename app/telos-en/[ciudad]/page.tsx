@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react"
 import { MobileHeader } from "@/components/layout/mobile-header"
-import { TeloCard } from "@/components/telos/telo-card"
+import { TeloCardBooking } from "@/components/telos/telo-card-booking" // Usar TeloCardBooking
 import { TelosFilters } from "@/components/telos-filters"
 import { TelosMapWrapper } from "@/components/telos-map-wrapper"
 import { Button } from "@/components/ui/button"
@@ -52,12 +52,15 @@ export default function CiudadPage({ params }: PageProps) {
         body: JSON.stringify({ ciudad: ciudadName }),
       })
 
-      if (response.ok) {
-        const data = await response.json()
-        console.log(`📊 Encontrados ${data.telos?.length || 0} telos en n8n`)
-        return data.telos || []
+      if (!response.ok) {
+        const errorBody = await response.text()
+        console.error(`Error response from n8n search: ${response.status} - ${errorBody}`)
+        throw new Error(`Error en n8n: ${response.status} ${response.statusText}`)
       }
-      return []
+
+      const data = await response.json()
+      console.log(`📊 Encontrados ${data.telos?.length || 0} telos en n8n`)
+      return data.telos || []
     } catch (error) {
       console.error("Error fetching from n8n:", error)
       return []
@@ -90,7 +93,7 @@ export default function CiudadPage({ params }: PageProps) {
         console.log("📦 Usando datos mock como fallback")
         const { mockTelos } = await import("@/lib/prisma")
         setTelos(mockTelos.filter((t) => t.ciudad.toLowerCase().includes(ciudadName.toLowerCase())))
-        setDataSource("database")
+        setDataSource("database") // Considerar esto como "mock" o "fallback"
       }
     }
 
@@ -216,11 +219,15 @@ export default function CiudadPage({ params }: PageProps) {
         {/* Results */}
         <div className="flex-1 px-4 py-4">
           {viewMode === "list" ? (
-            <div className="max-w-md mx-auto space-y-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+              {" "}
+              {/* Responsive grid */}
               {filteredTelos.length > 0 ? (
-                filteredTelos.map((telo) => <TeloCard key={telo.id} telo={telo} />)
+                filteredTelos.map((telo) => (
+                  <TeloCardBooking key={telo.id} telo={{ ...telo, disponible: true }} /> // Usar TeloCardBooking
+                ))
               ) : (
-                <div className="text-center py-8">
+                <div className="col-span-full text-center py-8">
                   <p className="text-gray-500 mb-4">No se encontraron telos en {ciudadName}</p>
                   <div className="space-y-2">
                     <Button onClick={refreshFromN8n} disabled={loadingN8n} className="rounded-full">

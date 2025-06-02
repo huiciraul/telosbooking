@@ -13,9 +13,7 @@ export default function TestWebhookPage() {
   const [result, setResult] = useState<any>(null)
   const [webhookConfig, setWebhookConfig] = useState<any>(null)
 
-  const baseUrl = process.env.NEXT_PUBLIC_VERCEL_URL
-    ? `https://${process.env.NEXT_PUBLIC_VERCEL_URL}`
-    : "http://localhost:3000"
+  const baseUrl = typeof window !== "undefined" ? window.location.origin : "http://localhost:3000"
 
   const checkWebhookConfig = async () => {
     try {
