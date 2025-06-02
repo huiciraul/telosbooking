@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button"
 import { RefreshCw, CheckCircle, AlertTriangle } from "lucide-react"
 
 interface Telo {
-  id: number // Cambiado a number
+  id: number
   nombre: string
   slug: string
   direccion: string
@@ -33,8 +33,11 @@ export function PopularTelos() {
 
       if (response.ok) {
         const data = await response.json()
-        console.log(`✅ Telos fetched: ${data.length}`)
-        setTelos(data)
+        console.log(`✅ Telos fetched: ${Array.isArray(data) ? data.length : 0}`)
+
+        // Asegurar que data es un array
+        const telosArray = Array.isArray(data) ? data : []
+        setTelos(telosArray)
         setSuccess(true)
       } else {
         throw new Error(`API Error: ${response.status}`)
@@ -46,7 +49,7 @@ export function PopularTelos() {
       // Fallback a datos mock en caso de error
       const mockData = [
         {
-          id: 1, // Cambiado a number
+          id: 1,
           nombre: "Hotel Palermo Premium",
           slug: "hotel-palermo-premium",
           direccion: "Av. Santa Fe 3000",
@@ -57,7 +60,7 @@ export function PopularTelos() {
           imagen_url: "https://images.unsplash.com/photo-1566073771259-6a8506099945?q=80&w=400&auto=format&fit=crop",
         },
         {
-          id: 2, // Cambiado a number
+          id: 2,
           nombre: "Albergue Villa Crespo",
           slug: "albergue-villa-crespo",
           direccion: "Corrientes 4500",
@@ -68,7 +71,7 @@ export function PopularTelos() {
           imagen_url: "https://images.unsplash.com/photo-1551882547-ff40c63fe5fa?q=80&w=400&auto=format&fit=crop",
         },
         {
-          id: 3, // Cambiado a number
+          id: 3,
           nombre: "Motel Belgrano Deluxe",
           slug: "motel-belgrano-deluxe",
           direccion: "Cabildo 2200",
@@ -136,7 +139,7 @@ export function PopularTelos() {
 
         {/* Grid de telos */}
         <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-4">
-          {telos.length > 0 ? (
+          {Array.isArray(telos) && telos.length > 0 ? (
             telos.map((telo) => <TeloCard key={telo.id} telo={telo} />)
           ) : (
             <div className="col-span-full text-center py-8">

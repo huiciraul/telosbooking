@@ -2,7 +2,6 @@ import { notFound } from "next/navigation"
 import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { MapPin, Star, Phone, Clock, Wifi, Car, Waves } from "lucide-react"
-import type { Telo } from "@/lib/models"
 import { TelosMapWrapper } from "@/components/telos-map-wrapper"
 
 interface PageProps {
@@ -10,19 +9,28 @@ interface PageProps {
 }
 
 async function getTeloBySlug(slug: string) {
+  if (!slug) return null
+
   // Usa NEXT_PUBLIC_SITE_URL si está definida, si no VERCEL_URL, si no localhost
   const baseUrl =
     process.env.NEXT_PUBLIC_SITE_URL?.replace(/\/$/, "") ||
     (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : "http://localhost:3000")
 
   try {
+    console.log(`Fetching telo with slug: ${slug} from ${baseUrl}/api/telo/${slug}`)
     const res = await fetch(`${baseUrl}/api/telo/${slug}`, {
       next: { revalidate: 3600 },
     })
-    if (!res.ok) return null
-    const data: Telo = await res.json()
+
+    if (!res.ok) {
+      console.error(`Error fetching telo: ${res.status} ${res.statusText}`)
+      return null
+    }
+
+    const data = await res.json()
     return data
   } catch (error) {
+    console.error("Error fetching telo:", error)
     return null
   }
 }

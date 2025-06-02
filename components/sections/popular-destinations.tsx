@@ -25,7 +25,11 @@ export function PopularDestinations() {
         const response = await fetch("/api/ciudades/populares")
         if (response.ok) {
           const data = await response.json()
-          setDestinations(data.data?.slice(0, 6) || [])
+          // Asegurar que data.data es un array
+          const ciudadesArray = Array.isArray(data.data) ? data.data.slice(0, 6) : []
+          setDestinations(ciudadesArray)
+        } else {
+          throw new Error("Error fetching ciudades")
         }
       } catch (error) {
         console.error("Error fetching ciudades:", error)
@@ -73,62 +77,63 @@ export function PopularDestinations() {
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {destinations.map((destination, index) => {
-            const images = [
-              "https://images.unsplash.com/photo-1589909202802-8f4aadce1849?q=80&w=400&auto=format&fit=crop",
-              "https://images.unsplash.com/photo-1578662996442-48f60103fc96?q=80&w=400&auto=format&fit=crop",
-              "https://images.unsplash.com/photo-1541888946425-d81bb19240f5?q=80&w=400&auto=format&fit=crop",
-              "https://images.unsplash.com/photo-1586276393635-5ecd8112165e?q=80&w=400&auto=format&fit=crop",
-              "https://images.unsplash.com/photo-1567696911980-2eed69a46042?q=80&w=400&auto=format&fit=crop",
-              "https://images.unsplash.com/photo-1559827260-dc66d52bef19?q=80&w=400&auto=format&fit=crop",
-            ]
+          {Array.isArray(destinations) &&
+            destinations.map((destination, index) => {
+              const images = [
+                "https://images.unsplash.com/photo-1589909202802-8f4aadce1849?q=80&w=400&auto=format&fit=crop",
+                "https://images.unsplash.com/photo-1578662996442-48f60103fc96?q=80&w=400&auto=format&fit=crop",
+                "https://images.unsplash.com/photo-1541888946425-d81bb19240f5?q=80&w=400&auto=format&fit=crop",
+                "https://images.unsplash.com/photo-1586276393635-5ecd8112165e?q=80&w=400&auto=format&fit=crop",
+                "https://images.unsplash.com/photo-1567696911980-2eed69a46042?q=80&w=400&auto=format&fit=crop",
+                "https://images.unsplash.com/photo-1559827260-dc66d52bef19?q=80&w=400&auto=format&fit=crop",
+              ]
 
-            return (
-              <Link key={destination.slug} href={`/telos-en/${destination.slug}`}>
-                <Card className="overflow-hidden hover:shadow-lg transition-all duration-200 group">
-                  <div className="relative">
-                    <div className="aspect-[16/10] overflow-hidden">
-                      <img
-                        src={images[index] || "/placeholder.svg"}
-                        alt={destination.nombre}
-                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                      />
-                    </div>
+              return (
+                <Link key={destination.slug || index} href={`/telos-en/${destination.slug || ""}`}>
+                  <Card className="overflow-hidden hover:shadow-lg transition-all duration-200 group">
+                    <div className="relative">
+                      <div className="aspect-[16/10] overflow-hidden">
+                        <img
+                          src={images[index] || "/placeholder.svg"}
+                          alt={destination.nombre}
+                          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                        />
+                      </div>
 
-                    {/* Trending badge */}
-                    {destination.busquedas && destination.busquedas > 10 && (
-                      <Badge className="absolute top-3 right-3 bg-blue-600 hover:bg-blue-700">
-                        <TrendingUp className="w-3 h-3 mr-1" />
-                        Trending
-                      </Badge>
-                    )}
+                      {/* Trending badge */}
+                      {destination.busquedas && destination.busquedas > 10 && (
+                        <Badge className="absolute top-3 right-3 bg-blue-600 hover:bg-blue-700">
+                          <TrendingUp className="w-3 h-3 mr-1" />
+                          Trending
+                        </Badge>
+                      )}
 
-                    {/* Gradient overlay */}
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
+                      {/* Gradient overlay */}
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
 
-                    {/* Content overlay */}
-                    <div className="absolute bottom-4 left-4 right-4 text-white">
-                      <h3 className="text-xl font-bold mb-1">{destination.nombre}</h3>
-                      <p className="text-sm text-gray-200 mb-2">{destination.provincia}</p>
+                      {/* Content overlay */}
+                      <div className="absolute bottom-4 left-4 right-4 text-white">
+                        <h3 className="text-xl font-bold mb-1">{destination.nombre}</h3>
+                        <p className="text-sm text-gray-200 mb-2">{destination.provincia}</p>
 
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center space-x-4 text-sm">
-                          <div className="flex items-center space-x-1">
-                            <MapPin className="w-4 h-4" />
-                            <span>{destination.total_telos || 0} telos</span>
-                          </div>
-                          <div className="flex items-center space-x-1">
-                            <Users className="w-4 h-4" />
-                            <span>Desde $2,200</span>
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center space-x-4 text-sm">
+                            <div className="flex items-center space-x-1">
+                              <MapPin className="w-4 h-4" />
+                              <span>{destination.total_telos || 0} telos</span>
+                            </div>
+                            <div className="flex items-center space-x-1">
+                              <Users className="w-4 h-4" />
+                              <span>Desde $2,200</span>
+                            </div>
                           </div>
                         </div>
                       </div>
                     </div>
-                  </div>
-                </Card>
-              </Link>
-            )
-          })}
+                  </Card>
+                </Link>
+              )
+            })}
         </div>
 
         {/* View all destinations */}

@@ -32,8 +32,8 @@ export default function CiudadPage({ params }: PageProps) {
       const response = await fetch(`/api/telos?ciudad=${encodeURIComponent(ciudadName)}`)
       if (response.ok) {
         const data = await response.json()
-        console.log(`📊 Encontrados ${data.length} telos en BD`)
-        return data
+        console.log(`📊 Encontrados ${Array.isArray(data) ? data.length : 0} telos en BD`)
+        return Array.isArray(data) ? data : []
       }
       return []
     } catch (error) {
@@ -55,7 +55,7 @@ export default function CiudadPage({ params }: PageProps) {
       if (response.ok) {
         const data = await response.json()
         console.log(`📊 Encontrados ${data.telos?.length || 0} telos en n8n`)
-        return data.telos || []
+        return Array.isArray(data.telos) ? data.telos : []
       }
       return []
     } catch (error) {
@@ -89,7 +89,10 @@ export default function CiudadPage({ params }: PageProps) {
         // Fallback a datos mock
         console.log("📦 Usando datos mock como fallback")
         const { mockTelos } = await import("@/lib/prisma")
-        setTelos(mockTelos.filter((t) => t.ciudad.toLowerCase().includes(ciudadName.toLowerCase())))
+        const filteredMockTelos = Array.isArray(mockTelos)
+          ? mockTelos.filter((t) => t.ciudad.toLowerCase().includes(ciudadName.toLowerCase()))
+          : []
+        setTelos(filteredMockTelos)
         setDataSource("database")
       }
     }
@@ -109,11 +112,14 @@ export default function CiudadPage({ params }: PageProps) {
     fetchTelos()
   }, [ciudadName])
 
-  const filteredTelos = telos.filter(
-    (telo) =>
-      telo.nombre.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      telo.direccion.toLowerCase().includes(searchTerm.toLowerCase()),
-  )
+  // Asegurar que telos es un array antes de filtrar
+  const filteredTelos = Array.isArray(telos)
+    ? telos.filter(
+        (telo) =>
+          telo.nombre?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          telo.direccion?.toLowerCase().includes(searchTerm.toLowerCase()),
+      )
+    : []
 
   if (loading) {
     return (
