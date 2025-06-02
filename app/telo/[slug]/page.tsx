@@ -14,10 +14,13 @@ async function getTeloBySlug(slug: string) {
   console.log("Page: Base URL:", baseUrl)
 
   try {
-    console.log("Page: Fetching from URL:", `$\{baseUrl\}/api/telo/$\{slug\}`)
-    const res = await fetch(`$\{baseUrl\}/api/telo/$\{slug\}`, {
+    const baseUrl = process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : "http://localhost:3000"
+    console.log("Page: Fetching from URL:", `${baseUrl}/api/telo/${slug}`)
+
+    const res = await fetch(`${baseUrl}/api/telo/${slug}`, {
       next: { revalidate: 3600 },
     })
+
     console.log("Page: API response status:", res.status, res.statusText)
 
     if (!res.ok) {
