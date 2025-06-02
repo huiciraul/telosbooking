@@ -45,9 +45,22 @@ export const n8nTeloSchema = z.object({
 
 export type N8nTelo = z.infer<typeof n8nTeloSchema>
 
+// Esquema para la búsqueda de telos - AGREGADO
+export const searchTelosSchema = z.object({
+  ciudad: z.string().optional(),
+  barrio: z.string().optional(),
+  amenities: z.string().optional(), // Servicios separados por coma
+  precio_min: z.string().optional(),
+  precio_max: z.string().optional(),
+  limit: z.string().optional(),
+})
+
+export type SearchTelos = z.infer<typeof searchTelosSchema>
+
 // Esquema para la búsqueda de ciudades
 export const ciudadSearchSchema = z.object({
   ciudad: z.string().min(1, "La ciudad es requerida."),
+  provincia: z.string().optional(),
 })
 
 export type CiudadSearch = z.infer<typeof ciudadSearchSchema>
