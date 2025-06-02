@@ -32,12 +32,13 @@ export default function CiudadPage({ params }: PageProps) {
       const response = await fetch(`/api/telos?ciudad=${encodeURIComponent(ciudadName)}`)
       if (response.ok) {
         const data = await response.json()
-        console.log(`📊 Encontrados ${data.length} telos en BD`)
+        console.log(`📊 fetchTelosFromDatabase: Encontrados ${data.length} telos en BD`)
         return data
       }
+      console.log("❌ fetchTelosFromDatabase: Respuesta no OK", response.status)
       return []
     } catch (error) {
-      console.error("Error fetching from database:", error)
+      console.error("❌ fetchTelosFromDatabase: Error fetching from database:", error)
       return []
     }
   }
@@ -54,15 +55,15 @@ export default function CiudadPage({ params }: PageProps) {
 
       if (!response.ok) {
         const errorBody = await response.text()
-        console.error(`Error response from n8n search: ${response.status} - ${errorBody}`)
+        console.error(`❌ fetchTelosFromN8n: Error response from n8n search: ${response.status} - ${errorBody}`)
         throw new Error(`Error en n8n: ${response.status} ${response.statusText}`)
       }
 
       const data = await response.json()
-      console.log(`📊 Encontrados ${data.telos?.length || 0} telos en n8n`)
+      console.log(`📊 fetchTelosFromN8n: Recibidos ${data.telos?.length || 0} telos de n8n`)
       return data.telos || []
     } catch (error) {
-      console.error("Error fetching from n8n:", error)
+      console.error("❌ fetchTelosFromN8n: Error fetching from n8n:", error)
       return []
     } finally {
       setLoadingN8n(false)
@@ -74,23 +75,25 @@ export default function CiudadPage({ params }: PageProps) {
 
     // Primero intentar base de datos
     const dbTelos = await fetchTelosFromDatabase()
+    console.log(`🔄 fetchTelos: dbTelos length: ${dbTelos.length}`)
 
     if (dbTelos.length > 0) {
       setTelos(dbTelos)
       setDataSource("database")
-      console.log("✅ Usando datos de la base de datos")
+      console.log("✅ fetchTelos: Usando datos de la base de datos")
     } else {
       // Si no hay datos en BD, buscar en n8n
-      console.log("📡 No hay datos en BD, buscando en n8n...")
+      console.log("📡 fetchTelos: No hay datos en BD, buscando en n8n...")
       const n8nTelos = await fetchTelosFromN8n()
+      console.log(`🔄 fetchTelos: n8nTelos length: ${n8nTelos.length}`)
 
       if (n8nTelos.length > 0) {
         setTelos(n8nTelos)
         setDataSource("n8n")
-        console.log("✅ Usando datos de n8n")
+        console.log("✅ fetchTelos: Usando datos de n8n")
       } else {
         // Fallback a datos mock
-        console.log("📦 Usando datos mock como fallback")
+        console.log("📦 fetchTelos: Usando datos mock como fallback")
         const { mockTelos } = await import("@/lib/prisma")
         setTelos(mockTelos.filter((t) => t.ciudad.toLowerCase().includes(ciudadName.toLowerCase())))
         setDataSource("database") // Considerar esto como "mock" o "fallback"

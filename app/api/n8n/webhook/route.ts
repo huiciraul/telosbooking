@@ -174,7 +174,7 @@ export async function POST(request: NextRequest) {
       } catch (validationError) {
         results.errores++
         results.detalles.push(`❌ Error en telo ${index + 1}: ${validationError}`)
-        console.error(`❌ Error validando telo ${index + 1}:`, validationError)
+        console.error(`❌ Error validando o procesando telo ${index + 1}:`, validationError) // Log de errores de validación
       }
     }
 
@@ -190,51 +190,6 @@ export async function POST(request: NextRequest) {
     })
   } catch (error: any) {
     console.error("❌ Error en webhook n8n:", error)
-    return NextResponse.json(
-      {
-        error: "Error interno del servidor",
-        details: error instanceof Error ? error.message : String(error),
-      },
-      { status: 500 },
-    )
-  }
-}
-
-export async function GET() {
-  try {
-    const isConnected = await checkDatabaseConnection()
-
-    if (!isConnected) {
-      return NextResponse.json({
-        status: "database_error",
-        endpoint: "/api/n8n/webhook",
-        timestamp: new Date().toISOString(),
-        error: "Base de datos no disponible",
-      })
-    }
-
-    const stats = await executeQuery<any[]>(`
-      SELECT 
-        COUNT(*) as total_telos,
-        COUNT(*) FILTER (WHERE fuente = 'n8n') as telos_n8n,
-        COUNT(*) FILTER (WHERE verificado = true) as telos_verificados,
-        AVG(rating) as rating_promedio
-      FROM telos 
-      WHERE activo = true
-    `)
-
-    return NextResponse.json({
-      status: "active",
-      endpoint: "/api/n8n/webhook",
-      timestamp: new Date().toISOString(),
-      stats: stats[0],
-      security: {
-        token_required: !!process.env.N8N_WEBHOOK_TOKEN,
-        rate_limiting: true,
-      },
-    })
-  } catch (error: any) {
-    console.error("❌ Error obteniendo stats del webhook:", error)
     return NextResponse.json(
       {
         error: "Error interno del servidor",

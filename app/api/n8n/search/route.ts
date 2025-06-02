@@ -34,11 +34,13 @@ export async function POST(request: NextRequest) {
 
     if (!n8nResponse.ok) {
       const errorText = await n8nResponse.text()
+      console.error(`Error response from n8n webhook: ${n8nResponse.status} - ${errorText}`)
       throw new Error(`Error en n8n webhook: ${n8nResponse.status} ${n8nResponse.statusText} - ${errorText}`)
     }
 
     const rawTelosData = await n8nResponse.json()
     console.log(`📥 Recibidos ${rawTelosData.length} telos de n8n webhook. Iniciando persistencia...`)
+    console.log("Raw telos data from n8n:", JSON.stringify(rawTelosData, null, 2)) // Log raw data
 
     const persistedTelos = []
     const results = {
@@ -156,7 +158,7 @@ export async function POST(request: NextRequest) {
         }
       } catch (validationError) {
         results.errores++
-        console.error(`❌ Error procesando telo ${index + 1}:`, validationError)
+        console.error(`❌ Error procesando telo ${index + 1}:`, validationError) // Log de errores de validación
       }
     }
 
