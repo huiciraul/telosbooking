@@ -13,13 +13,9 @@ export function ResponsiveHeader() {
     <header className="sticky top-0 z-50 w-full border-b bg-white/95 shadow-sm backdrop-blur supports-[backdrop-filter]:bg-white/60">
       <div className="container flex h-14 items-center justify-between">
         <Link href="/" className="flex items-center space-x-2">
-          <Image
-            src="/logo.png"
-            alt="Motelo Logo"
-            width={120} // Adjust width as needed
-            height={36} // Adjust height as needed
-            priority
-          />
+          <span className="text-2xl font-bold font-poppins bg-gradient-to-r from-purple-600 to-blue-600 bg-clip-text text-transparent">
+            Motelo
+          </span>
         </Link>
 
         <div className="hidden md:flex flex-1 max-w-md mx-4">

@@ -3,6 +3,8 @@
 import { useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Heart, User, MapPin } from "lucide-react"
+import Link from "next/link"
+import Image from "next/image"
 
 export function MobileHeader() {
   const [showMenu, setShowMenu] = useState(false)
@@ -12,14 +14,21 @@ export function MobileHeader() {
       <header className="sticky top-0 z-50 glass-effect border-b border-purple-100">
         <div className="flex items-center justify-between px-4 py-3">
           {/* Logo */}
-          <div className="flex items-center space-x-2">
-            <div className="w-8 h-8 gradient-primary rounded-xl flex items-center justify-center">
-              <MapPin className="w-5 h-5 text-white" />
+          <Link href="/" className="flex items-center space-x-2">
+            <Image
+              src="/logo.png"
+              alt="Motelo Logo"
+              width={36}
+              height={36}
+              className="rounded-full object-cover"
+              priority
+            />
+            <div className="flex items-center space-x-2">
+              <span className="text-xl font-bold bg-gradient-to-r from-purple-600 to-purple-500 bg-clip-text text-transparent">
+                Motelos
+              </span>
             </div>
-            <span className="text-xl font-bold bg-gradient-to-r from-purple-600 to-purple-500 bg-clip-text text-transparent">
-              Motelos
-            </span>
-          </div>
+          </Link>
 
           {/* Actions */}
           <div className="flex items-center space-x-2">

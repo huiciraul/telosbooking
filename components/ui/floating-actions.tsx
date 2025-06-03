@@ -11,12 +11,12 @@ interface FloatingActionsProps {
 export function FloatingActions({ telefono, showWhatsApp = true }: FloatingActionsProps) {
   return (
     <div className="fixed bottom-6 right-6 z-40 flex flex-col gap-3">
-      {/* WhatsApp - solo si showWhatsApp es true */}
-      {showWhatsApp && (
+      {/* WhatsApp - solo si hay teléfono */}
+      {showWhatsApp && telefono && (
         <Button
           size="lg"
           className="rounded-full shadow-lg bg-green-600 hover:bg-green-700 h-14 w-14"
-          onClick={() => window.open("https://wa.me/5491234567890", "_blank")}
+          onClick={() => window.open(`https://wa.me/${telefono}`, "_blank")}
         >
           <MessageCircle className="h-6 w-6" />
           <span className="sr-only">WhatsApp</span>
