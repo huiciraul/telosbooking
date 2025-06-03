@@ -59,6 +59,29 @@ export async function POST(request: NextRequest) {
           continue
         }
 
+        // Procesar servicios de manera segura
+        let servicios = ["WiFi"] // Default
+        if (teloData.servicios) {
+          if (Array.isArray(teloData.servicios)) {
+            servicios = teloData.servicios.filter((s) => s && typeof s === "string")
+          } else if (typeof teloData.servicios === "string") {
+            try {
+              const parsed = JSON.parse(teloData.servicios)
+              if (Array.isArray(parsed)) {
+                servicios = parsed.filter((s) => s && typeof s === "string")
+              }
+            } catch {
+              // Si no se puede parsear, usar como string único
+              servicios = [teloData.servicios]
+            }
+          }
+        }
+
+        // Asegurar que servicios no esté vacío
+        if (servicios.length === 0) {
+          servicios = ["WiFi"]
+        }
+
         // Limpiar datos - NUNCA GENERAR PRECIOS
         const cleanData = {
           nombre: String(teloData.nombre).trim(),
@@ -67,12 +90,12 @@ export async function POST(request: NextRequest) {
           ciudad: String(teloData.ciudad || ciudad).trim(),
           telefono: teloData.telefono || null,
           precio: null, // SIEMPRE NULL
-          servicios: Array.isArray(teloData.servicios) ? teloData.servicios : ["WiFi"],
+          servicios: servicios,
           descripcion: teloData.descripcion || null,
           rating: null, // SIEMPRE NULL
           imagen_url: teloData.imagen_url || null,
-          lat: teloData.lat || null,
-          lng: teloData.lng || null,
+          lat: teloData.lat ? Number(teloData.lat) : null,
+          lng: teloData.lng ? Number(teloData.lng) : null,
           fuente: "n8n-search",
           activo: true,
         }
@@ -93,6 +116,7 @@ export async function POST(request: NextRequest) {
             UPDATE telos SET
               updated_at = NOW(),
               fuente = ${cleanData.fuente},
+              servicios = ${JSON.stringify(cleanData.servicios)},
               imagen_url = COALESCE(${cleanData.imagen_url}, imagen_url),
               lat = COALESCE(${cleanData.lat}, lat),
               lng = COALESCE(${cleanData.lng}, lng)
@@ -107,29 +131,50 @@ export async function POST(request: NextRequest) {
               descripcion, rating, imagen_url, lat, lng, fuente, activo, 
               created_at, updated_at
             ) VALUES (
-              ${cleanData.nombre}, ${cleanData.slug}, ${cleanData.direccion}, 
-              ${cleanData.ciudad}, ${cleanData.telefono}, ${cleanData.precio}, 
-              ${JSON.stringify(cleanData.servicios)}, ${cleanData.descripcion}, 
-              ${cleanData.rating}, ${cleanData.imagen_url}, ${cleanData.lat}, 
-              ${cleanData.lng}, ${cleanData.fuente}, ${cleanData.activo}, 
-              NOW(), NOW()
+              ${cleanData.nombre}, 
+              ${cleanData.slug}, 
+              ${cleanData.direccion}, 
+              ${cleanData.ciudad}, 
+              ${cleanData.telefono}, 
+              ${cleanData.precio}, 
+              ${JSON.stringify(cleanData.servicios)}, 
+              ${cleanData.descripcion}, 
+              ${cleanData.rating}, 
+              ${cleanData.imagen_url}, 
+              ${cleanData.lat}, 
+              ${cleanData.lng}, 
+              ${cleanData.fuente}, 
+              ${cleanData.activo}, 
+              NOW(), 
+              NOW()
             )
           `
           results.insertados++
         }
       } catch (error) {
         console.error(`❌ Error procesando telo ${index + 1}:`, error)
+        console.error(`Datos del telo:`, JSON.stringify(teloData, null, 2))
         results.errores++
       }
     }
 
     console.log(
-      `✅ Búsqueda completada SIN PRECIOS: ${results.insertados} insertados, ${results.actualizados} actualizados`,
+      `✅ Búsqueda completada SIN PRECIOS: ${results.insertados} insertados, ${results.actualizados} actualizados, ${results.errores} errores`,
     )
+
+    // Obtener los telos insertados/actualizados para devolver
+    const finalTelos = await sql`
+      SELECT * FROM telos 
+      WHERE ciudad ILIKE ${`%${ciudad}%`} 
+        AND activo = true 
+      ORDER BY created_at DESC 
+      LIMIT 50
+    `
 
     return NextResponse.json({
       success: true,
       message: "Búsqueda completada sin generar precios",
+      telos: finalTelos,
       stats: results,
       timestamp: new Date().toISOString(),
     })
@@ -139,6 +184,7 @@ export async function POST(request: NextRequest) {
       {
         error: "Error en búsqueda",
         details: error instanceof Error ? error.message : String(error),
+        telos: [], // Devolver array vacío en caso de error
       },
       { status: 500 },
     )
