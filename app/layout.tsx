@@ -63,6 +63,18 @@ export default function RootLayout({
           src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-8114610675284168"
           crossOrigin="anonymous"
         />
+        {/* Google Analytics */}
+        <script async src="https://www.googletagmanager.com/gtag/js?id=G-52EMK485TC" />
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+      gtag('config', 'G-52EMK485TC');
+    `,
+          }}
+        />
       </head>
       <body className={`${inter.className} bg-background text-foreground`}>{children}</body>
     </html>

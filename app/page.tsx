@@ -6,6 +6,7 @@ import { PopularDestinations } from "@/components/sections/popular-destinations"
 import { Footer } from "@/components/layout/footer"
 import { FloatingActions } from "@/components/ui/floating-actions"
 import { PopularTelosWrapper } from "@/components/sections/popular-telos-wrapper"
+import { PopularCitiesSection } from "@/components/sections/popular-cities-section"
 
 export default function HomePage() {
   return (
@@ -16,6 +17,7 @@ export default function HomePage() {
         <HeroSearch />
         <QuickFilters />
         <PopularTelosWrapper />
+        <PopularCitiesSection />
         <FeaturesSection />
         <PopularDestinations />
       </main>

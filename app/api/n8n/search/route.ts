@@ -1,8 +1,6 @@
 import { type NextRequest, NextResponse } from "next/server"
 import { z } from "zod"
-import { neon } from "@neondatabase/serverless"
-
-const sql = neon(process.env.DATABASE_URL!)
+import { executeQuery } from "@/lib/db"
 
 const searchSchema = z.object({
   ciudad: z.string().min(1),
@@ -13,7 +11,7 @@ export async function POST(request: NextRequest) {
     const body = await request.json()
     const { ciudad } = searchSchema.parse(body)
 
-    console.log(`🔍 Iniciando búsqueda para: ${ciudad} - SIN GENERAR PRECIOS`)
+    console.log(`🔍 Iniciando búsqueda para: ${ciudad}`)
 
     // URL del webhook de n8n
     const n8nWebhookUrl = process.env.N8N_WEBHOOK_URL
@@ -61,94 +59,96 @@ export async function POST(request: NextRequest) {
 
         // Procesar servicios de manera segura
         let servicios = ["WiFi"] // Default
-        if (teloData.servicios) {
-          if (Array.isArray(teloData.servicios)) {
-            servicios = teloData.servicios.filter((s) => s && typeof s === "string")
-          } else if (typeof teloData.servicios === "string") {
-            try {
-              const parsed = JSON.parse(teloData.servicios)
-              if (Array.isArray(parsed)) {
-                servicios = parsed.filter((s) => s && typeof s === "string")
-              }
-            } catch {
-              // Si no se puede parsear, usar como string único
-              servicios = [teloData.servicios]
-            }
-          }
+        if (teloData.servicios && Array.isArray(teloData.servicios) && teloData.servicios.length > 0) {
+          servicios = teloData.servicios.filter((s) => s && typeof s === "string" && s.trim().length > 0)
         }
-
-        // Asegurar que servicios no esté vacío
         if (servicios.length === 0) {
           servicios = ["WiFi"]
         }
 
-        // Limpiar datos - NUNCA GENERAR PRECIOS
+        // Limpiar y validar datos
         const cleanData = {
           nombre: String(teloData.nombre).trim(),
           slug: generateSlug(teloData.nombre),
           direccion: String(teloData.direccion).trim(),
           ciudad: String(teloData.ciudad || ciudad).trim(),
-          telefono: teloData.telefono || null,
+          telefono: (teloData.telefono && String(teloData.telefono).trim()) || null,
           precio: null, // SIEMPRE NULL
           servicios: servicios,
-          descripcion: teloData.descripcion || null,
-          rating: null, // SIEMPRE NULL
-          imagen_url: teloData.imagen_url || null,
-          lat: teloData.lat ? Number(teloData.lat) : null,
-          lng: teloData.lng ? Number(teloData.lng) : null,
+          descripcion:
+            teloData.descripcion && String(teloData.descripcion).trim() !== "lodging, point_of_interest, establishment"
+              ? String(teloData.descripcion).trim()
+              : null,
+          rating:
+            teloData.rating && typeof teloData.rating === "number" && teloData.rating > 0
+              ? Math.min(Math.max(teloData.rating, 0), 5)
+              : null,
+          imagen_url:
+            teloData.imagen_url && String(teloData.imagen_url).trim() !== ""
+              ? String(teloData.imagen_url).trim()
+              : null,
+          lat: teloData.lat && typeof teloData.lat === "number" ? Number(teloData.lat) : null,
+          lng: teloData.lng && typeof teloData.lng === "number" ? Number(teloData.lng) : null,
           fuente: "n8n-search",
           activo: true,
         }
 
-        console.log(`💾 Insertando telo SIN PRECIO: ${cleanData.nombre}`)
+        console.log(`💾 Procesando telo: ${cleanData.nombre}`)
 
         // Verificar si existe
-        const existing = await sql`
+        const existingQuery = `
           SELECT id FROM telos 
-          WHERE LOWER(TRIM(nombre)) = LOWER(TRIM(${cleanData.nombre}))
-            AND LOWER(TRIM(direccion)) = LOWER(TRIM(${cleanData.direccion}))
+          WHERE LOWER(TRIM(nombre)) = LOWER(TRIM('${cleanData.nombre.replace(/'/g, "''")}'))
+            AND LOWER(TRIM(direccion)) = LOWER(TRIM('${cleanData.direccion.replace(/'/g, "''")}'))
           LIMIT 1
         `
 
+        const existing = await executeQuery(existingQuery)
+
         if (existing.length > 0) {
           // Actualizar sin tocar el precio
-          await sql`
+          const updateQuery = `
             UPDATE telos SET
               updated_at = NOW(),
-              fuente = ${cleanData.fuente},
-              servicios = ${JSON.stringify(cleanData.servicios)},
-              imagen_url = COALESCE(${cleanData.imagen_url}, imagen_url),
+              fuente = '${cleanData.fuente}',
+              servicios = '${JSON.stringify(cleanData.servicios)}',
+              imagen_url = COALESCE(${cleanData.imagen_url ? `'${cleanData.imagen_url.replace(/'/g, "''")}'` : "NULL"}, imagen_url),
               lat = COALESCE(${cleanData.lat}, lat),
-              lng = COALESCE(${cleanData.lng}, lng)
-            WHERE id = ${existing[0].id}
+              lng = COALESCE(${cleanData.lng}, lng),
+              rating = COALESCE(${cleanData.rating}, rating)
+            WHERE id = '${existing[0].id}'
           `
+
+          await executeQuery(updateQuery)
           results.actualizados++
         } else {
-          // Insertar nuevo telo SIN PRECIO
-          await sql`
+          // Insertar nuevo telo
+          const insertQuery = `
             INSERT INTO telos (
               nombre, slug, direccion, ciudad, telefono, precio, servicios, 
               descripcion, rating, imagen_url, lat, lng, fuente, activo, 
               created_at, updated_at
             ) VALUES (
-              ${cleanData.nombre}, 
-              ${cleanData.slug}, 
-              ${cleanData.direccion}, 
-              ${cleanData.ciudad}, 
-              ${cleanData.telefono}, 
-              ${cleanData.precio}, 
-              ${JSON.stringify(cleanData.servicios)}, 
-              ${cleanData.descripcion}, 
+              '${cleanData.nombre.replace(/'/g, "''")}', 
+              '${cleanData.slug}', 
+              '${cleanData.direccion.replace(/'/g, "''")}', 
+              '${cleanData.ciudad.replace(/'/g, "''")}', 
+              ${cleanData.telefono ? `'${cleanData.telefono.replace(/'/g, "''")}'` : "NULL"}, 
+              NULL, 
+              '${JSON.stringify(cleanData.servicios)}', 
+              ${cleanData.descripcion ? `'${cleanData.descripcion.replace(/'/g, "''")}'` : "NULL"}, 
               ${cleanData.rating}, 
-              ${cleanData.imagen_url}, 
+              ${cleanData.imagen_url ? `'${cleanData.imagen_url.replace(/'/g, "''")}'` : "NULL"}, 
               ${cleanData.lat}, 
               ${cleanData.lng}, 
-              ${cleanData.fuente}, 
+              '${cleanData.fuente}', 
               ${cleanData.activo}, 
               NOW(), 
               NOW()
             )
           `
+
+          await executeQuery(insertQuery)
           results.insertados++
         }
       } catch (error) {
@@ -159,21 +159,23 @@ export async function POST(request: NextRequest) {
     }
 
     console.log(
-      `✅ Búsqueda completada SIN PRECIOS: ${results.insertados} insertados, ${results.actualizados} actualizados, ${results.errores} errores`,
+      `✅ Búsqueda completada: ${results.insertados} insertados, ${results.actualizados} actualizados, ${results.errores} errores`,
     )
 
-    // Obtener los telos insertados/actualizados para devolver
-    const finalTelos = await sql`
+    // Obtener los telos para devolver
+    const finalTelosQuery = `
       SELECT * FROM telos 
-      WHERE ciudad ILIKE ${`%${ciudad}%`} 
+      WHERE ciudad ILIKE '%${ciudad}%' 
         AND activo = true 
       ORDER BY created_at DESC 
       LIMIT 50
     `
 
+    const finalTelos = await executeQuery(finalTelosQuery)
+
     return NextResponse.json({
       success: true,
-      message: "Búsqueda completada sin generar precios",
+      message: "Búsqueda completada",
       telos: finalTelos,
       stats: results,
       timestamp: new Date().toISOString(),
@@ -184,7 +186,7 @@ export async function POST(request: NextRequest) {
       {
         error: "Error en búsqueda",
         details: error instanceof Error ? error.message : String(error),
-        telos: [], // Devolver array vacío en caso de error
+        telos: [],
       },
       { status: 500 },
     )

@@ -24,7 +24,7 @@ export function TeloCard({ telo }: TeloCardProps) {
 
   return (
     <Card className="overflow-hidden bg-white rounded-2xl shadow-sm border-0 hover:shadow-lg transition-all duration-300 animate-fade-in group">
-      <Link href={`/telo/${telo.slug}`}>
+      <Link href={`/telo/${telo.slug}`} className="block">
         <div className="relative">
           {/* Image */}
           <div className="relative w-full h-48 md:h-40 lg:h-48">
@@ -112,17 +112,13 @@ export function TeloCard({ telo }: TeloCardProps) {
               </div>
               <div className="flex items-center space-x-2">
                 {telo.telefono && (
-                  <Button
-                    asChild
-                    size="sm"
-                    variant="outline"
-                    className="rounded-full"
+                  <a
+                    href={`tel:${telo.telefono}`}
                     onClick={(e) => e.stopPropagation()}
+                    className="inline-flex items-center justify-center px-2 py-1 text-sm border rounded-full text-gray-700 border-gray-300 hover:bg-gray-100"
                   >
-                    <a href={`tel:${telo.telefono}`}>
-                      <Phone className="w-3 h-3" />
-                    </a>
-                  </Button>
+                    <Phone className="w-3 h-3" />
+                  </a>
                 )}
                 <div className="w-2 h-2 bg-green-400 rounded-full"></div>
               </div>
