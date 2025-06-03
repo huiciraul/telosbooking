@@ -124,7 +124,10 @@ export function HeroSearch() {
         fetch("/api/n8n/search", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ ciudad: cityName }),
+          body: JSON.stringify({
+            ciudad: cityName,
+            provincia: provinceName,
+          }),
         }).catch((error) => console.log("n8n search error (non-blocking):", error))
       } else {
         console.log(`Ya existen telos para ${cityName}, omitiendo scraping`)

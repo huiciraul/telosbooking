@@ -48,12 +48,24 @@ export async function POST(req: Request) {
     }
 
     const data = await response.json()
-    const telosFromN8n = Array.isArray(data[0]?.telos) ? data[0].telos : []
+    const telosFromN8n =
+      Array.isArray(data?.telos) ? data.telos :
+      Array.isArray(data) && Array.isArray(data[0]?.telos) ? data[0].telos :
+      []
     console.log(`[n8n/search] Recibidos ${telosFromN8n.length} telos de n8n.`)
 
     const stats = { insertados: 0, actualizados: 0, errores: 0 }
 
-    for (const raw of telosFromN8n) {
+    for (const rawOriginal of telosFromN8n) {
+      // Clonar para no mutar el original
+      const raw = { ...rawOriginal }
+
+      // Normalizar precio: convertir string a número si es necesario
+      if (typeof raw.precio === "string") {
+        const match = raw.precio.match(/(\d+([.,]\d+)?)/)
+        raw.precio = match ? Number(match[1].replace(",", ".")) : null
+      }
+
       const parsed = n8nTeloSchema.safeParse(raw)
       if (!parsed.success) {
         stats.errores++
@@ -61,9 +73,12 @@ export async function POST(req: Request) {
         continue
       }
 
-      const telo = parsed.data
-      telo.ciudad = telo.ciudad || ciudad
-      telo.ciudad_id = ciudadId
+      // Generar slug si no viene
+      const telo = {
+        ...parsed.data,
+        ciudad: parsed.data.ciudad || ciudad,
+        slug: parsed.data.slug || generateSlug(parsed.data.nombre),
+      }
 
       const exists = await executeQuery(
         `SELECT id FROM telos WHERE LOWER(nombre) = LOWER($1) AND LOWER(direccion) = LOWER($2) LIMIT 1`,
