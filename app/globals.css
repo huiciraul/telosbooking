@@ -2,8 +2,6 @@
 @tailwind components;
 @tailwind utilities;
 
-@import url("https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap");
-
 @layer base {
   :root {
     --background: 0 0% 100%;
@@ -40,7 +38,11 @@
 
 @layer components {
   .font-inter {
-    font-family: "Inter", sans-serif;
+    font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  }
+
+  .font-poppins {
+    font-family: "Poppins", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
   }
 
   .gradient-primary {
@@ -50,5 +52,30 @@
   .glass-effect {
     backdrop-filter: blur(20px);
     background: rgba(255, 255, 255, 0.8);
+  }
+
+  /* Optimización para anuncios */
+  .ad-container {
+    @apply w-full flex justify-center items-center min-h-[100px];
+  }
+
+  .ad-container ins {
+    @apply block w-full;
+  }
+
+  /* Espaciado optimizado para contenido y anuncios */
+  .content-with-ads {
+    @apply space-y-8;
+  }
+
+  .sidebar-ads {
+    @apply space-y-6;
+  }
+
+  /* Responsive ads */
+  @media (max-width: 768px) {
+    .ad-container {
+      @apply min-h-[80px];
+    }
   }
 }

@@ -1,20 +1,16 @@
 import Link from "next/link"
 import { Facebook, Instagram, Twitter } from "lucide-react"
-import Image from "next/image"
 
 export function Footer() {
   return (
     <footer className="border-t bg-gray-100 py-8">
       <div className="container grid grid-cols-1 gap-8 md:grid-cols-4">
         <div className="space-y-4">
-          <Link href="/" className="flex items-center space-x-2">
-            <Image
-              src="/logo.png"
-              alt="Motelo Logo"
-              width={120} // Adjust width as needed
-              height={36} // Adjust height as needed
-              priority
-            />
+          {/* Logo solo texto */}
+          <Link href="/" className="flex items-center">
+            <span className="text-2xl font-bold font-poppins bg-gradient-to-r from-purple-600 to-blue-600 bg-clip-text text-transparent">
+              Motelo
+            </span>
           </Link>
           <p className="text-sm text-gray-600">
             Tu guía definitiva para encontrar los mejores albergues transitorios y telos en Argentina.
@@ -96,7 +92,7 @@ export function Footer() {
         </div>
       </div>
       <div className="mt-8 text-center text-sm text-gray-500">
-        &copy; {new Date().getFullYear()} Motelos. Todos los derechos reservados.
+        &copy; {new Date().getFullYear()} Motelo. Todos los derechos reservados.
       </div>
     </footer>
   )

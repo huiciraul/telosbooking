@@ -31,11 +31,21 @@ export const n8nTeloSchema = z.object({
   slug: z.string().optional(),
   direccion: z.string().min(1),
   ciudad: z.string().min(1),
-  precio: z.number().nullable().default(0),
+  precio: z.number().nullable().optional(), // No transformar precios
   telefono: z.string().nullable().default(null),
   servicios: z.array(z.string()).default([]),
   descripcion: z.string().nullable().default(null),
-  rating: z.number().nullable().default(0),
+  rating: z
+    .number()
+    .nullable()
+    .default(0)
+    .transform((val) => {
+      // Normalizar rating
+      if (val === null || val === undefined || isNaN(val)) return 0
+      if (val < 0) return 0
+      if (val > 5) return 5
+      return val
+    }),
   imagen_url: z.string().url().nullable().default(null),
   lat: z.number().nullable().default(null),
   lng: z.number().nullable().default(null),
@@ -102,7 +112,7 @@ export const mockTelos: Telo[] = [
     slug: "hotel-palermo-premium",
     direccion: "Av. Santa Fe 3000",
     ciudad: "Buenos Aires",
-    precio: 3500,
+    precio: null, // Precio null para no mostrar precios falsos
     telefono: "011-4555-1234",
     servicios: ["WiFi", "Estacionamiento", "Hidromasaje"],
     descripcion:
@@ -124,7 +134,7 @@ export const mockTelos: Telo[] = [
     slug: "albergue-villa-crespo",
     direccion: "Corrientes 4500",
     ciudad: "Buenos Aires",
-    precio: 2800,
+    precio: null, // Precio null para no mostrar precios falsos
     telefono: "011-4777-5678",
     servicios: ["WiFi", "Aire Acondicionado"],
     descripcion:
@@ -146,7 +156,7 @@ export const mockTelos: Telo[] = [
     slug: "motel-belgrano-deluxe",
     direccion: "Cabildo 2200",
     ciudad: "Buenos Aires",
-    precio: 4200,
+    precio: null, // Precio null para no mostrar precios falsos
     telefono: "011-4888-9012",
     servicios: ["Estacionamiento", "Jacuzzi", "TV Cable"],
     descripcion:
@@ -168,7 +178,7 @@ export const mockTelos: Telo[] = [
     slug: "hotel-cordoba-centro",
     direccion: "San Martín 150",
     ciudad: "Córdoba",
-    precio: 2500,
+    precio: null, // Precio null para no mostrar precios falsos
     telefono: "0351-422-3456",
     servicios: ["WiFi", "Frigobar"],
     descripcion:
@@ -190,7 +200,7 @@ export const mockTelos: Telo[] = [
     slug: "albergue-rosario",
     direccion: "Pellegrini 1200",
     ciudad: "Rosario",
-    precio: 2200,
+    precio: null, // Precio null para no mostrar precios falsos
     telefono: "0341-455-7890",
     servicios: ["WiFi", "Estacionamiento"],
     descripcion:
@@ -212,7 +222,7 @@ export const mockTelos: Telo[] = [
     slug: "motel-mendoza",
     direccion: "Av. San Martín 500",
     ciudad: "Mendoza",
-    precio: 3200,
+    precio: null, // Precio null para no mostrar precios falsos
     telefono: "0261-123-4567",
     servicios: ["WiFi", "Estacionamiento", "Aire Acondicionado"],
     descripcion:

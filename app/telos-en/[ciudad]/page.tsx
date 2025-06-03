@@ -8,15 +8,9 @@ import { TelosFilters } from "@/components/telos-filters"
 import { TelosMapWrapper } from "@/components/telos-map-wrapper"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { Badge } from "@/components/ui/badge"
-import { Map, List, Filter, Search, RefreshCw, Database, Cloud, X, HelpCircle } from "lucide-react"
+import { Map, List, Filter, Search, X, HelpCircle, RefreshCw } from "lucide-react"
 import type { Telo } from "@/lib/models"
-import { FaqSection } from "@/components/sections/faq-section" // Importar el nuevo componente
-
-// Nota: Para metadata dinámica en Client Components, se usaría `useEffect` y `document.title`,
-// pero es mejor manejarlo en Server Components o with `generateMetadata` en `page.tsx` si es posible.
-// Dado que esta página ya es 'use client', la metadata se manejará a nivel de layout o con una estrategia mixta.
-// Por ahora, nos enfocaremos en el contenido y estructura.
+import { FaqSection } from "@/components/sections/faq-section"
 
 interface PageProps {
   params: { ciudad: string }
@@ -36,25 +30,22 @@ export default function CiudadPage({ params }: PageProps) {
   const [showFilters, setShowFilters] = useState(false)
   const [telos, setTelos] = useState<Telo[]>([])
   const [loading, setLoading] = useState(true)
-  const [loadingN8n, setLoadingN8n] = useState(false)
-  const [dataSource, setDataSource] = useState<"database" | "n8n" | "mixed">("database")
+  const [searching, setSearching] = useState(false)
 
   const ciudadSlug = params.ciudad
   const ciudadName = capitalizeCityName(ciudadSlug)
 
   // Actualizar título del documento dinámicamente
   useEffect(() => {
-    document.title = `Telos en ${ciudadName} | Compará precios y servicios ${new Date().getFullYear()} | Motelos`
-    // Aquí también podrías actualizar meta tags si es necesario, aunque es menos ideal en client components
+    document.title = `Telos en ${ciudadName} | Compará precios y servicios ${new Date().getFullYear()} | Motelo`
   }, [ciudadName])
 
   const fetchTelosFromDatabase = async () => {
     try {
-      console.log(`🔍 Buscando en base de datos para ${ciudadName}...`)
+      console.log(`🔍 Buscando telos para ${ciudadName}...`)
       const response = await fetch(`/api/telos?ciudad=${encodeURIComponent(ciudadName)}`)
       if (response.ok) {
         const data = await response.json()
-        console.log(`📊 Encontrados ${Array.isArray(data) ? data.length : 0} telos en BD para ${ciudadName}`)
         return Array.isArray(data) ? data : []
       }
       return []
@@ -64,10 +55,10 @@ export default function CiudadPage({ params }: PageProps) {
     }
   }
 
-  const fetchTelosFromN8n = async () => {
+  const searchTelosOnline = async () => {
     try {
-      setLoadingN8n(true)
-      console.log(`🔍 Buscando en n8n para ${ciudadName}...`)
+      setSearching(true)
+      console.log(`🔍 Buscando telos en tiempo real para ${ciudadName}...`)
       const response = await fetch("/api/n8n/search", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -76,42 +67,46 @@ export default function CiudadPage({ params }: PageProps) {
 
       if (response.ok) {
         const data = await response.json()
-        console.log(`📊 Encontrados ${data.telos?.length || 0} telos en n8n para ${ciudadName}`)
         return Array.isArray(data.telos) ? data.telos : []
       }
       return []
     } catch (error) {
-      console.error("Error fetching from n8n:", error)
+      console.error("Error searching online:", error)
       return []
     } finally {
-      setLoadingN8n(false)
+      setSearching(false)
     }
   }
 
   const fetchTelos = async () => {
     setLoading(true)
+
+    // Primero buscar en base de datos
     const dbTelos = await fetchTelosFromDatabase()
 
     if (dbTelos.length > 0) {
       setTelos(dbTelos)
-      setDataSource("database")
     } else {
-      // Usar mock data local
-      const { mockTelos } = await import("@/lib/models")
-      const filteredMockTelos = Array.isArray(mockTelos)
-        ? mockTelos.filter((t) => t.ciudad.toLowerCase().includes(ciudadName.toLowerCase()))
-        : []
-      setTelos(filteredMockTelos)
-      setDataSource("database")
+      // Si no hay datos en BD, buscar automáticamente online
+      const onlineTelos = await searchTelosOnline()
+      if (onlineTelos.length > 0) {
+        setTelos(onlineTelos)
+      } else {
+        // Usar mock data como último recurso
+        const { mockTelos } = await import("@/lib/models")
+        const filteredMockTelos = Array.isArray(mockTelos)
+          ? mockTelos.filter((t) => t.ciudad.toLowerCase().includes(ciudadName.toLowerCase()))
+          : []
+        setTelos(filteredMockTelos)
+      }
     }
     setLoading(false)
   }
 
-  const refreshFromN8n = async () => {
-    const n8nTelos = await fetchTelosFromN8n()
-    if (n8nTelos.length > 0) {
-      setTelos(n8nTelos)
-      setDataSource("n8n")
+  const refreshSearch = async () => {
+    const onlineTelos = await searchTelosOnline()
+    if (onlineTelos.length > 0) {
+      setTelos(onlineTelos)
     }
   }
 
@@ -130,7 +125,7 @@ export default function CiudadPage({ params }: PageProps) {
   const faqItems = [
     {
       question: `¿Cuánto cuesta un telo en ${ciudadName}?`,
-      answer: `Los precios de los telos en ${ciudadName} varían según la categoría y los servicios. Puedes encontrar opciones desde $2500 hasta $8000 o más por turno. Te recomendamos revisar los precios actualizados en cada ficha.`,
+      answer: `Los precios de los telos en ${ciudadName} varían según la categoría y los servicios. Te recomendamos contactar directamente para consultar tarifas actualizadas.`,
     },
     {
       question: `¿Qué servicios suelen tener los telos en ${ciudadName}?`,
@@ -176,10 +171,8 @@ export default function CiudadPage({ params }: PageProps) {
       </div>
 
       <div className="bg-white border-b border-purple-100 sticky top-16 md:top-16 z-30">
-        {" "}
-        {/* Ajustado top para header sticky */}
         <div className="container mx-auto px-4 py-4">
-          {/* Breadcrumbs (simulado, idealmente un componente) */}
+          {/* Breadcrumbs */}
           <nav aria-label="Breadcrumb" className="text-sm text-gray-500 mb-3">
             <ol className="list-none p-0 inline-flex">
               <li className="flex items-center">
@@ -202,7 +195,7 @@ export default function CiudadPage({ params }: PageProps) {
 
           <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
             <div className="flex-1">
-              <h1 className="text-2xl lg:text-3xl font-bold text-gray-900 capitalize">Telos en {ciudadName}</h1>
+              <h1 className="text-2xl lg:text-3xl font-bold text-gray-900">Telos en {ciudadName}</h1>
               <p className="text-gray-600 mt-1">
                 {`Encontrá los mejores telos en ${ciudadName}. Con cochera, jacuzzi, 24 horas, y más. ¡Compará y elegí!`}
               </p>
@@ -229,6 +222,7 @@ export default function CiudadPage({ params }: PageProps) {
               </Button>
             </div>
           </div>
+
           <div className="mt-4 space-y-3">
             <div className="relative">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
@@ -250,18 +244,19 @@ export default function CiudadPage({ params }: PageProps) {
                 Filtros {showFilters && <X className="w-4 h-4 ml-2" />}
               </Button>
               <div className="flex items-center space-x-2">
-                <Badge variant={dataSource === "database" ? "default" : "secondary"} className="text-xs">
-                  <Database className="w-3 h-3 mr-1" />
-                  {dataSource === "database" ? "BD" : "n8n"}
-                </Badge>
                 <Button
                   variant="outline"
-                  size="icon"
-                  onClick={refreshFromN8n}
-                  disabled={loadingN8n}
-                  className="rounded-full w-8 h-8"
+                  size="sm"
+                  onClick={refreshSearch}
+                  disabled={searching}
+                  className="rounded-full"
                 >
-                  {loadingN8n ? <RefreshCw className="w-4 h-4 animate-spin" /> : <Cloud className="w-4 h-4" />}
+                  {searching ? (
+                    <RefreshCw className="w-4 h-4 mr-2 animate-spin" />
+                  ) : (
+                    <RefreshCw className="w-4 h-4 mr-2" />
+                  )}
+                  Actualizar
                 </Button>
                 <div className="flex lg:hidden items-center space-x-1">
                   <Button
@@ -287,24 +282,11 @@ export default function CiudadPage({ params }: PageProps) {
         </div>
       </div>
 
-      {dataSource === "n8n" && (
-        <div className="bg-blue-50 border-b border-blue-100">
-          <div className="container mx-auto px-4 py-2">
-            <div className="flex items-center justify-center space-x-2 text-blue-700 text-sm">
-              <Cloud className="w-4 h-4" />
-              <span>Datos obtenidos en tiempo real desde n8n</span>
-            </div>
-          </div>
-        </div>
-      )}
-
       <div className="container mx-auto px-4 py-6">
         <div className="flex flex-col lg:flex-row gap-6">
           {showFilters && (
             <div className="hidden lg:block w-full lg:w-80 flex-shrink-0">
               <div className="sticky top-48">
-                {" "}
-                {/* Ajustado top para header + controles sticky */}
                 <TelosFilters />
               </div>
             </div>
@@ -340,8 +322,12 @@ export default function CiudadPage({ params }: PageProps) {
                     </h3>
                     <p className="text-gray-500 mb-6">Intenta ajustar tus filtros o buscar en tiempo real.</p>
                     <div className="space-y-3">
-                      <Button onClick={refreshFromN8n} disabled={loadingN8n} className="rounded-full">
-                        <Cloud className="w-4 h-4 mr-2" />
+                      <Button onClick={refreshSearch} disabled={searching} className="rounded-full">
+                        {searching ? (
+                          <RefreshCw className="w-4 h-4 mr-2 animate-spin" />
+                        ) : (
+                          <RefreshCw className="w-4 h-4 mr-2" />
+                        )}
                         Buscar en tiempo real
                       </Button>
                       <Button onClick={() => window.history.back()} variant="outline" className="rounded-full">

@@ -1,29 +1,86 @@
-import { cn } from "@/lib/utils"
+"use client"
+
+import { useEffect } from "react"
 
 interface AdBannerProps {
-  type: "horizontal" | "vertical" | "square"
+  slot: string
+  format?: "auto" | "rectangle" | "vertical" | "horizontal"
+  responsive?: boolean
   className?: string
 }
 
-export function AdBanner({ type, className }: AdBannerProps) {
-  const dimensions = {
-    horizontal: "h-24 w-full max-w-4xl", // 728x90
-    vertical: "h-96 w-64", // 300x250
-    square: "h-64 w-64", // 250x250
-  }
+export function AdBanner({ slot, format = "auto", responsive = true, className = "" }: AdBannerProps) {
+  useEffect(() => {
+    try {
+      // @ts-ignore
+      ;(window.adsbygoogle = window.adsbygoogle || []).push({})
+    } catch (err) {
+      console.error("AdSense error:", err)
+    }
+  }, [])
 
   return (
-    <div className={cn("mx-auto", className)}>
-      <div
-        className={cn(
-          "bg-gray-100 border-2 border-dashed border-gray-300 flex items-center justify-center rounded-lg",
-          dimensions[type],
-        )}
-      >
-        <div className="text-center text-gray-500">
-          <div className="text-sm font-medium">Espacio publicitario</div>
-          <div className="text-xs">Google AdSense</div>
-        </div>
+    <div className={`ad-container ${className}`}>
+      <ins
+        className="adsbygoogle"
+        style={{ display: "block" }}
+        data-ad-client="ca-pub-8114610675284168"
+        data-ad-slot={slot}
+        data-ad-format={format}
+        data-full-width-responsive={responsive.toString()}
+      />
+    </div>
+  )
+}
+
+// Componentes específicos para diferentes tipos de anuncios
+export function HeaderAd() {
+  return (
+    <div className="w-full bg-gray-50 py-2 border-b">
+      <div className="container mx-auto px-4">
+        <AdBanner
+          slot="1234567890" // Reemplaza con tu slot ID real
+          format="horizontal"
+          className="text-center"
+        />
+      </div>
+    </div>
+  )
+}
+
+export function SidebarAd() {
+  return (
+    <div className="sticky top-20">
+      <AdBanner
+        slot="1234567891" // Reemplaza con tu slot ID real
+        format="vertical"
+        className="w-full max-w-xs"
+      />
+    </div>
+  )
+}
+
+export function InContentAd() {
+  return (
+    <div className="my-8 py-4 bg-gray-50 rounded-lg">
+      <AdBanner
+        slot="1234567892" // Reemplaza con tu slot ID real
+        format="rectangle"
+        className="text-center"
+      />
+    </div>
+  )
+}
+
+export function FooterAd() {
+  return (
+    <div className="w-full bg-gray-50 py-4 border-t">
+      <div className="container mx-auto px-4">
+        <AdBanner
+          slot="1234567893" // Reemplaza con tu slot ID real
+          format="horizontal"
+          className="text-center"
+        />
       </div>
     </div>
   )

@@ -1,28 +1,40 @@
 "use client"
 
 import { Button } from "@/components/ui/button"
-import { Map, Navigation } from "lucide-react"
+import { MessageCircle, Phone } from "lucide-react"
 
-export function FloatingActions() {
+interface FloatingActionsProps {
+  telefono?: string | null
+  showWhatsApp?: boolean
+}
+
+export function FloatingActions({ telefono, showWhatsApp = true }: FloatingActionsProps) {
   return (
-    <div className="fixed bottom-6 right-4 flex flex-col space-y-3 z-40">
-      {/* Map View */}
-      <Button
-        variant="secondary"
-        size="sm"
-        className="w-12 h-12 rounded-full bg-white shadow-lg hover:shadow-xl transition-all hover:scale-105"
-      >
-        <Map className="w-5 h-5" />
-      </Button>
+    <div className="fixed bottom-6 right-6 z-40 flex flex-col gap-3">
+      {/* WhatsApp - solo si showWhatsApp es true */}
+      {showWhatsApp && (
+        <Button
+          size="lg"
+          className="rounded-full shadow-lg bg-green-600 hover:bg-green-700 h-14 w-14"
+          onClick={() => window.open("https://wa.me/5491234567890", "_blank")}
+        >
+          <MessageCircle className="h-6 w-6" />
+          <span className="sr-only">WhatsApp</span>
+        </Button>
+      )}
 
-      {/* Near Me */}
-      <Button
-        variant="secondary"
-        size="sm"
-        className="w-12 h-12 rounded-full bg-white shadow-lg hover:shadow-xl transition-all hover:scale-105"
-      >
-        <Navigation className="w-5 h-5" />
-      </Button>
+      {/* Teléfono - solo si hay número específico */}
+      {telefono && (
+        <Button
+          size="lg"
+          variant="outline"
+          className="rounded-full shadow-lg bg-white hover:bg-gray-50 h-14 w-14"
+          onClick={() => window.open(`tel:${telefono}`, "_blank")}
+        >
+          <Phone className="h-6 w-6" />
+          <span className="sr-only">Llamar</span>
+        </Button>
+      )}
     </div>
   )
 }

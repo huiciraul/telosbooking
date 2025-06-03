@@ -46,6 +46,15 @@ export default function AyudaPage() {
                 y envíanos un mensaje.
               </AccordionContent>
             </AccordionItem>
+            <AccordionItem value="item-5">
+              <AccordionTrigger>¿Qué es un Telo / Albergue Transitorio?</AccordionTrigger>
+              <AccordionContent>
+                Los albergues transitorios (o "telos") son hoteles que ofrecen habitaciones por turnos de algunas horas
+                o estadías nocturnas, enfocados en brindar privacidad y comodidad. Son ideales para parejas que buscan
+                encuentros íntimos, viajeros que necesitan descanso, personas que quieren pasar una noche fuera de casa,
+                o cualquiera que busque un espacio privado y discreto por unas horas.
+              </AccordionContent>
+            </AccordionItem>
           </Accordion>
         </div>
       </main>

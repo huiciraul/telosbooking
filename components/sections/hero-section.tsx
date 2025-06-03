@@ -43,7 +43,8 @@ export function HeroSection() {
 
           {/* Subtitle */}
           <p className="mb-12 text-lg text-primary-100 lg:text-xl">
-            Explorá por ciudad, barrio o servicios. La forma más fácil de encontrar albergues transitorios en Argentina.
+            Explorá por ciudad, barrio o servicios. La forma más fácil de encontrar albergues transitorios en Argentina
+            para parejas, viajeros y cualquier persona que busque privacidad y comodidad.
           </p>
 
           {/* Search Form */}

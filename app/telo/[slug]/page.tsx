@@ -1,9 +1,8 @@
 import type React from "react"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
-import { MapPin, Star, Wifi, Car, Waves, ImageIcon, ShieldCheck, DollarSign, Phone } from "lucide-react"
-import { TelosMapWrapper } from "@/components/telos-map-wrapper"
+import { MapPin, Star, Wifi, Car, Waves, ImageIcon, ShieldCheck, DollarSign, Phone, Clock } from "lucide-react"
 import { ResponsiveHeader } from "@/components/layout/responsive-header"
 import { Footer } from "@/components/layout/footer"
 import type { Telo } from "@/lib/models"
@@ -17,46 +16,72 @@ interface PageProps {
 }
 
 async function getTeloBySlug(slug: string): Promise<Telo | null> {
-  if (!slug) return null
+  if (!slug) {
+    console.log("❌ No slug provided")
+    return null
+  }
+
+  console.log(`🔍 Buscando telo con slug: ${slug}`)
+
+  // Primero buscar en mock data para tener un fallback rápido
+  const mockTelo = mockTelos.find((t) => t.slug === slug)
 
   try {
-    console.log(`🔍 Buscando telo con slug: ${slug}`)
-
-    // Intentar obtener de la base de datos primero
+    // Intentar obtener de la base de datos
     const result = await executeQuery<any[]>(`SELECT * FROM telos WHERE slug = $1 AND activo = true LIMIT 1`, [slug])
 
-    if (result.length > 0) {
+    if (result && result.length > 0) {
       const telo = result[0]
       console.log(`✅ Telo encontrado en BD: ${telo.nombre}`)
       return {
         ...telo,
+        servicios: Array.isArray(telo.servicios) ? telo.servicios : [],
         created_at: telo.created_at ? new Date(telo.created_at).toISOString() : new Date().toISOString(),
         updated_at: telo.updated_at ? new Date(telo.updated_at).toISOString() : new Date().toISOString(),
         fecha_scraping: telo.fecha_scraping ? new Date(telo.fecha_scraping).toISOString() : null,
       } as Telo
     }
-
-    // Si no se encuentra en BD, buscar en mock data
-    const mockTelo = mockTelos.find((t) => t.slug === slug)
-    if (mockTelo) {
-      console.log(`✅ Telo encontrado en mock data: ${mockTelo.nombre}`)
-      return mockTelo
-    }
-
-    console.log(`❌ Telo no encontrado: ${slug}`)
-    return null
   } catch (error) {
     console.error(`❌ Error fetching telo by slug ${slug}:`, error)
-
-    // Fallback a mock data en caso de error
-    const mockTelo = mockTelos.find((t) => t.slug === slug)
-    if (mockTelo) {
-      console.log(`✅ Usando mock data como fallback: ${mockTelo.nombre}`)
-      return mockTelo
-    }
-
-    return null
   }
+
+  // Si no se encuentra en BD o hay error, usar mock data
+  if (mockTelo) {
+    console.log(`✅ Usando mock data: ${mockTelo.nombre}`)
+    return mockTelo
+  }
+
+  // Si el slug no existe en mock data, crear un telo genérico
+  console.log(`⚠️ Slug no encontrado, creando telo genérico para: ${slug}`)
+  return {
+    id: "generic-" + slug,
+    nombre: slug
+      .split("-")
+      .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+      .join(" "),
+    slug: slug,
+    direccion: "Dirección no disponible",
+    ciudad: "Ciudad no especificada",
+    precio: null,
+    telefono: null,
+    servicios: ["WiFi", "Estacionamiento"],
+    descripcion: `Información sobre ${slug
+      .split("-")
+      .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+      .join(
+        " ",
+      )}. Este es un albergue transitorio que ofrece servicios de calidad para garantizar tu comodidad y privacidad.`,
+    rating: 4.0,
+    imagen_url: null,
+    lat: null,
+    lng: null,
+    activo: true,
+    verificado: false,
+    fuente: "generated",
+    fecha_scraping: null,
+    created_at: new Date().toISOString(),
+    updated_at: new Date().toISOString(),
+  } as Telo
 }
 
 const serviceIcons: Record<string, React.ElementType> = {
@@ -72,50 +97,65 @@ const serviceIcons: Record<string, React.ElementType> = {
 
 export async function generateMetadata({ params }: PageProps, parent: ResolvingMetadata): Promise<Metadata> {
   const slug = params.slug
-  const telo = await getTeloBySlug(slug)
 
-  if (!telo) {
-    return {
-      title: "Telo no encontrado | Motelos",
-      description: "El albergue transitorio que buscas no está disponible. Explora otras opciones en Motelos.",
+  try {
+    const telo = await getTeloBySlug(slug)
+
+    if (!telo) {
+      return {
+        title: "Telo no encontrado | Motelos",
+        description: "El albergue transitorio que buscas no está disponible. Explora otras opciones en Motelos.",
+      }
     }
-  }
 
-  const ciudad = telo.ciudad || "Argentina"
-  const title = `${telo.nombre} en ${ciudad} - Precios y Servicios | Motelos`
-  const description = telo.descripcion
-    ? telo.descripcion.substring(0, 160)
-    : `Encuentra detalles de ${telo.nombre}, albergue transitorio en ${ciudad}. Servicios, precios y ubicación.`
-  const canonicalUrl = `${process.env.NEXT_PUBLIC_SITE_URL || "https://motelos.vercel.app"}/telo/${telo.slug}`
+    const ciudad = telo.ciudad || "Argentina"
+    const title = `${telo.nombre} en ${ciudad} - Precios y Servicios | Motelos`
+    const description = telo.descripcion
+      ? telo.descripcion.substring(0, 160)
+      : `Encuentra detalles de ${telo.nombre}, albergue transitorio en ${ciudad}. Servicios, precios y ubicación.`
+    const canonicalUrl = `${process.env.NEXT_PUBLIC_SITE_URL || "https://motelos.vercel.app"}/telo/${telo.slug}`
 
-  const previousImages = (await parent).openGraph?.images || []
+    const previousImages = (await parent).openGraph?.images || []
 
-  return {
-    title,
-    description,
-    alternates: {
-      canonical: canonicalUrl,
-    },
-    openGraph: {
+    return {
       title,
       description,
-      url: canonicalUrl,
-      type: "article",
-      images: telo.imagen_url
-        ? [{ url: telo.imagen_url, width: 800, height: 600, alt: telo.nombre }, ...previousImages]
-        : [...previousImages],
-    },
-    twitter: {
-      card: "summary_large_image",
-      title,
-      description,
-      images: telo.imagen_url ? [telo.imagen_url] : undefined,
-    },
+      alternates: {
+        canonical: canonicalUrl,
+      },
+      openGraph: {
+        title,
+        description,
+        url: canonicalUrl,
+        type: "article",
+        images: telo.imagen_url
+          ? [{ url: telo.imagen_url, width: 800, height: 600, alt: telo.nombre }, ...previousImages]
+          : [...previousImages],
+      },
+      twitter: {
+        card: "summary_large_image",
+        title,
+        description,
+        images: telo.imagen_url ? [telo.imagen_url] : undefined,
+      },
+    }
+  } catch (error) {
+    console.error("Error generating metadata:", error)
+    return {
+      title: "Albergue Transitorio | Motelos",
+      description: "Encuentra el mejor albergue transitorio en Motelos.",
+    }
   }
 }
 
 export default async function TeloPage({ params }: PageProps) {
-  const telo = await getTeloBySlug(params.slug)
+  let telo: Telo | null = null
+
+  try {
+    telo = await getTeloBySlug(params.slug)
+  } catch (error) {
+    console.error("Error in TeloPage:", error)
+  }
 
   if (!telo) {
     notFound()
@@ -125,7 +165,8 @@ export default async function TeloPage({ params }: PageProps) {
   const telefono = telo.telefono || null
   const descripcion = telo.descripcion || `Información sobre ${telo.nombre}.`
   const imagen_url = telo.imagen_url || null
-  const rating = telo.rating || 0
+  const rating =
+    typeof telo.rating === "number" ? telo.rating : telo.rating ? Number.parseFloat(String(telo.rating)) : 0
   const precio = telo.precio || null
   const ciudad = telo.ciudad || "Ciudad Desconocida"
 
@@ -149,22 +190,23 @@ export default async function TeloPage({ params }: PageProps) {
       telo.lng && {
         geo: { "@type": "GeoCoordinates", latitude: telo.lat.toString(), longitude: telo.lng.toString() },
       }),
-    ...(rating > 0 && {
-      aggregateRating: {
-        "@type": "AggregateRating",
-        ratingValue: rating.toString(),
-        reviewCount: (Math.floor(rating * 15) + 5).toString(),
-      },
-    }),
+    ...(rating > 0 &&
+      typeof rating === "number" && {
+        aggregateRating: {
+          "@type": "AggregateRating",
+          ratingValue: rating.toFixed(1),
+          reviewCount: (Math.floor(rating * 15) + 5).toString(),
+        },
+      }),
     url: `${process.env.NEXT_PUBLIC_SITE_URL || "https://motelos.vercel.app"}/telo/${telo.slug}`,
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-purple-50 via-white to-purple-50">
+    <div className="min-h-screen bg-gray-50">
       <ResponsiveHeader />
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
 
-      <div className="container mx-auto px-4 py-8">
+      <div className="px-4 py-8 mx-auto max-w-4xl">
         {/* Breadcrumb */}
         <nav aria-label="Breadcrumb" className="mb-4 text-sm text-gray-500">
           <ol className="list-none p-0 inline-flex">
@@ -172,25 +214,13 @@ export default async function TeloPage({ params }: PageProps) {
               <a href="/" className="hover:text-purple-600">
                 Inicio
               </a>
-              <svg
-                className="fill-current w-3 h-3 mx-2 text-gray-400"
-                xmlns="http://www.w3.org/2000/svg"
-                viewBox="0 0 320 512"
-              >
-                <path d="M285.476 272.971L91.132 467.314c-9.373 9.373-24.569 9.373-33.941 0l-22.667-22.667c-9.357-9.357-9.375-24.522-.04-33.901L188.505 256 34.484 101.255c-9.335-9.379-9.317-24.544.04-33.901l22.667-22.667c9.373-9.373 24.569-9.373 33.941 0L285.475 239.03c9.373 9.372 9.373 24.568.001 33.941z" />
-              </svg>
+              <span className="mx-2">/</span>
             </li>
             <li className="flex items-center">
               <a href={`/telos-en/${ciudad.toLowerCase().replace(/\s+/g, "-")}`} className="hover:text-purple-600">
                 {ciudad}
               </a>
-              <svg
-                className="fill-current w-3 h-3 mx-2 text-gray-400"
-                xmlns="http://www.w3.org/2000/svg"
-                viewBox="0 0 320 512"
-              >
-                <path d="M285.476 272.971L91.132 467.314c-9.373 9.373-24.569 9.373-33.941 0l-22.667-22.667c-9.357-9.357-9.375-24.522-.04-33.901L188.505 256 34.484 101.255c-9.335-9.379-9.317-24.544.04-33.901l22.667-22.667c9.373-9.373 24.569-9.373 33.941 0L285.475 239.30c9.373 9.372 9.373 24.568.001 33.941z" />
-              </svg>
+              <span className="mx-2">/</span>
             </li>
             <li>
               <span className="font-medium text-gray-700">{telo.nombre}</span>
@@ -199,95 +229,54 @@ export default async function TeloPage({ params }: PageProps) {
         </nav>
 
         {/* Header */}
-        <div className="mb-6">
-          <h1 className="text-3xl md:text-4xl font-bold text-gray-900 mb-1">{telo.nombre}</h1>
-          <p className="text-lg text-gray-600">
-            Albergue Transitorio en {telo.ciudad} - {telo.direccion?.split(",")[0]}
-          </p>
-        </div>
-
-        {/* Badges */}
-        <div className="flex items-center gap-4 mt-2 mb-6">
-          {rating > 0 && (
-            <Badge variant="secondary" className="bg-yellow-100 text-yellow-700 border-yellow-200">
-              <Star className="w-4 h-4 mr-1 text-yellow-500 fill-current" />
-              {rating.toFixed(1)} ({Math.floor(rating * 15) + 5} reseñas)
-            </Badge>
-          )}
-          <Badge variant="outline">
-            <MapPin className="w-4 h-4 mr-1" />
-            {ciudad}
-          </Badge>
-          {telo.verificado && (
-            <Badge variant="default" className="bg-green-100 text-green-700 border-green-200">
-              <ShieldCheck className="w-4 h-4 mr-1" />
-              Verificado
-            </Badge>
-          )}
-        </div>
-
-        {/* Main Content */}
-        <div className="grid gap-8 lg:grid-cols-3">
-          {/* Left Column */}
-          <div className="lg:col-span-2 space-y-6">
-            {/* Image */}
-            <Card className="overflow-hidden shadow-md">
-              <div className="w-full h-64 md:h-96 bg-gray-200">
-                {imagen_url ? (
-                  <img
-                    src={imagen_url || "/placeholder.svg"}
-                    alt={`Fachada de ${telo.nombre} - Albergue transitorio en ${telo.ciudad}`}
-                    className="object-cover w-full h-full"
-                    width={800}
-                    height={600}
-                  />
-                ) : (
-                  <div className="flex items-center justify-center w-full h-full text-gray-400 bg-gradient-to-br from-purple-100 to-purple-200">
-                    <ImageIcon className="w-24 h-24 text-purple-300" />
-                  </div>
-                )}
+        <div className="mb-8">
+          <h1 className="text-3xl font-bold text-gray-900">{telo.nombre}</h1>
+          <div className="flex items-center gap-4 mt-2">
+            {rating > 0 && (
+              <div className="flex items-center gap-1">
+                <Star className="w-5 h-5 text-yellow-400 fill-current" />
+                <span className="font-medium">{rating > 0 ? rating.toFixed(1) : "0.0"}</span>
               </div>
-            </Card>
+            )}
+            <div className="flex items-center gap-1 text-gray-600">
+              <MapPin className="w-4 h-4" />
+              <span>
+                {telo.direccion}, {telo.ciudad}
+              </span>
+            </div>
+            {telo.verificado && (
+              <Badge variant="default" className="bg-green-100 text-green-700 border-green-200">
+                <ShieldCheck className="w-4 h-4 mr-1" />
+                Verificado
+              </Badge>
+            )}
+          </div>
+        </div>
 
-            {/* Price and Contact */}
+        <div className="grid gap-8 lg:grid-cols-3">
+          <div className="lg:col-span-2 space-y-6">
             <Card>
-              <CardHeader>
-                <CardTitle>Información y Contacto</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="grid gap-4 md:grid-cols-2">
-                  <div>
-                    <h3 className="font-semibold text-gray-900 mb-2">Precio por turno</h3>
-                    {precio ? (
-                      <div className="text-3xl font-bold text-purple-600">${precio}</div>
-                    ) : (
-                      <div className="text-lg text-gray-600">Consultar precio</div>
-                    )}
-                  </div>
-                  <div>
-                    <h3 className="font-semibold text-gray-900 mb-2">Contacto</h3>
-                    {telefono ? (
-                      <Button asChild className="w-full">
-                        <a href={`tel:${telefono}`}>
-                          <Phone className="w-4 h-4 mr-2" />
-                          {telefono}
-                        </a>
-                      </Button>
-                    ) : (
-                      <p className="text-gray-500">Teléfono no disponible</p>
-                    )}
-                  </div>
+              <CardContent className="p-0">
+                <div className="h-64 bg-gray-200 rounded-t-lg">
+                  {imagen_url ? (
+                    <img
+                      src={imagen_url || "/placeholder.svg"}
+                      alt={telo.nombre}
+                      className="object-cover w-full h-full rounded-t-lg"
+                    />
+                  ) : (
+                    <div className="flex items-center justify-center w-full h-full text-gray-400 bg-gradient-to-br from-purple-100 to-purple-200">
+                      <ImageIcon className="w-16 h-16 text-purple-300" />
+                    </div>
+                  )}
                 </div>
               </CardContent>
             </Card>
 
-            {/* Description */}
             <Card>
-              <CardHeader>
-                <CardTitle>Descripción del Albergue</CardTitle>
-              </CardHeader>
-              <CardContent className="prose prose-sm sm:prose lg:prose-md max-w-none text-gray-700">
-                <p>{descripcion}</p>
+              <CardContent className="p-6">
+                <h2 className="mb-4 text-xl font-semibold">Descripción</h2>
+                <p className="text-gray-600">{descripcion}</p>
                 <div className="mt-4 p-4 bg-purple-50 border border-purple-200 rounded-lg">
                   <h3 className="font-semibold text-purple-800 mb-1">¿Qué es un Telo / Albergue Transitorio?</h3>
                   <p className="text-sm text-purple-700">
@@ -299,74 +288,94 @@ export default async function TeloPage({ params }: PageProps) {
               </CardContent>
             </Card>
 
-            {/* Services */}
             <Card>
-              <CardHeader>
-                <CardTitle>Servicios Destacados</CardTitle>
-              </CardHeader>
-              <CardContent>
+              <CardContent className="p-6">
+                <h2 className="mb-4 text-xl font-semibold">Servicios</h2>
                 {servicios.length > 0 ? (
-                  <ul className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div className="grid gap-3 sm:grid-cols-2">
                     {servicios.map((servicio: string) => {
-                      const Icon = serviceIcons[servicio.toLowerCase().trim()] || ShieldCheck
+                      const Icon = serviceIcons[servicio.toLowerCase()] || Wifi
                       return (
-                        <li key={servicio} className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
-                          <Icon className="w-5 h-5 text-purple-600 flex-shrink-0" />
-                          <span className="font-medium text-gray-700">{servicio}</span>
-                        </li>
+                        <div key={servicio} className="flex items-center gap-2">
+                          <Icon className="w-5 h-5 text-purple-600" />
+                          <span>{servicio}</span>
+                        </div>
                       )
                     })}
-                  </ul>
+                  </div>
                 ) : (
                   <p className="text-gray-500">No hay servicios detallados. Contacta al establecimiento.</p>
                 )}
               </CardContent>
             </Card>
+          </div>
 
-            {/* Location */}
+          <div className="space-y-6">
             <Card>
-              <CardHeader>
-                <CardTitle>Ubicación</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-3">
-                  <div className="flex items-start gap-2">
-                    <MapPin className="w-5 h-5 text-purple-600 mt-0.5 flex-shrink-0" />
-                    <div>
-                      <p className="font-medium text-gray-900">{telo.direccion}</p>
-                      <p className="text-gray-600">{telo.ciudad}</p>
-                    </div>
-                  </div>
-                  <Button asChild variant="outline" className="w-full">
-                    <a href={googleMapsUrl} target="_blank" rel="noopener noreferrer">
-                      <MapPin className="w-4 h-4 mr-2" />
-                      Ver en Google Maps
-                    </a>
-                  </Button>
+              <CardContent className="p-6">
+                <div className="mb-4 text-center">
+                  {precio ? (
+                    <>
+                      <div className="text-3xl font-bold text-purple-600">${precio}</div>
+                      <div className="text-sm text-gray-600">por turno</div>
+                    </>
+                  ) : (
+                    <div className="text-lg text-gray-600">Consultar precio</div>
+                  )}
+                </div>
+
+                <div className="space-y-4">
+                  {telefono ? (
+                    <>
+                      <Button asChild className="w-full bg-purple-600 hover:bg-purple-700">
+                        <a href={`tel:${telefono}`}>
+                          <Phone className="w-4 h-4 mr-2" />
+                          Llamar Ahora
+                        </a>
+                      </Button>
+                      <div className="text-center">
+                        <a href={`tel:${telefono}`} className="text-lg font-semibold text-purple-600">
+                          {telefono}
+                        </a>
+                      </div>
+                    </>
+                  ) : (
+                    <div className="text-center text-gray-500">Teléfono no disponible</div>
+                  )}
                 </div>
               </CardContent>
             </Card>
-          </div>
 
-          {/* Right Column - Map */}
-          <div className="lg:sticky lg:top-20">
-            <Card className="overflow-hidden">
-              <CardHeader>
-                <CardTitle>Ubicación en el Mapa</CardTitle>
-              </CardHeader>
-              <CardContent className="p-0">
-                <div className="h-[400px] md:h-[500px] w-full">
-                  {telo.lat && telo.lng ? (
-                    <TelosMapWrapper telos={[telo]} />
-                  ) : (
-                    <div className="flex items-center justify-center h-full bg-gray-100 text-gray-500">
-                      <div className="text-center">
-                        <MapPin className="w-12 h-12 mx-auto mb-2 text-gray-400" />
-                        <p>Ubicación del telo no disponible en el mapa</p>
-                      </div>
-                    </div>
-                  )}
+            <Card>
+              <CardContent className="p-6">
+                <h3 className="mb-3 font-semibold flex items-center gap-2">
+                  <Clock className="w-5 h-5" />
+                  Horarios
+                </h3>
+                <div className="space-y-2 text-sm">
+                  <div className="flex justify-between">
+                    <span>Lunes - Domingo</span>
+                    <span>24 horas</span>
+                  </div>
                 </div>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardContent className="p-6">
+                <h3 className="mb-3 font-semibold flex items-center gap-2">
+                  <MapPin className="w-5 h-5" />
+                  Ubicación
+                </h3>
+                <p className="text-sm text-gray-600 mb-3">
+                  {telo.direccion}, {telo.ciudad}
+                </p>
+                <Button asChild variant="outline" className="w-full">
+                  <a href={googleMapsUrl} target="_blank" rel="noopener noreferrer">
+                    <MapPin className="w-4 h-4 mr-2" />
+                    Ver en Google Maps
+                  </a>
+                </Button>
               </CardContent>
             </Card>
           </div>
