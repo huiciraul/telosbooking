@@ -7,6 +7,9 @@ export const teloSchema = z.object({
   slug: z.string().min(1, "El slug es requerido."),
   direccion: z.string().min(1, "La dirección es requerida."),
   ciudad: z.string().min(1, "La ciudad es requerida."),
+  ciudad_id: z.number().nullable(), // Añadido ciudad_id
+  provincia: z.string().nullable(), // Asegurado que existe
+  pais: z.string().nullable(), // Asegurado que existe
   precio: z.number().min(0, "El precio debe ser un número positivo.").nullable(),
   telefono: z.string().nullable(),
   servicios: z.array(z.string()).default([]),
@@ -31,26 +34,81 @@ export const n8nTeloSchema = z.object({
   slug: z.string().optional(),
   direccion: z.string().min(1),
   ciudad: z.string().min(1),
-  precio: z.number().nullable().optional(), // No transformar precios
+  provincia: z.string().nullable().default(null), // Añadido provincia
+  pais: z.string().nullable().default(null), // Añadido pais
+  precio: z.number().nullable().optional(),
   telefono: z.string().nullable().default(null),
   servicios: z.array(z.string()).default([]),
-  descripcion: z.string().nullable().default(null),
+  // Combinar descripcion y descripcion_hotel
+  descripcion: z
+    .string()
+    .nullable()
+    .default(null)
+    .transform((val, ctx) => {
+      // Acceder de forma segura a descripcion_hotel desde el objeto de entrada original (ctx.parent)
+      const rawData = ctx.parent as Record<string, any>
+      const hotelDesc = rawData?.descripcion_hotel
+      const genericDesc = "lodging, point_of_interest, establishment"
+
+      if (hotelDesc && typeof hotelDesc === "string" && hotelDesc.trim() !== "") {
+        return hotelDesc.trim()
+      }
+      if (
+        val &&
+        typeof val === "string" &&
+        val.trim() !== "" &&
+        val.trim().toLowerCase() !== genericDesc.toLowerCase()
+      ) {
+        return val.trim()
+      }
+      return null
+    }),
+  descripcion_hotel: z.string().nullable().optional(), // Campo original de n8n, se transformará en 'descripcion'
+  puntuacion: z.number().nullable().optional(), // Campo original de n8n
+  scrapeado_en: z.string().datetime().nullable().optional(), // Campo original de n8n
+
   rating: z
     .number()
     .nullable()
     .default(0)
-    .transform((val) => {
-      // Normalizar rating
-      if (val === null || val === undefined || isNaN(val)) return 0
-      if (val < 0) return 0
-      if (val > 5) return 5
-      return val
+    .transform((val, ctx) => {
+      const rawData = ctx.parent as Record<string, any>
+      const puntuacion = rawData?.puntuacion // Obtener puntuacion de la data cruda
+      if (puntuacion !== undefined && puntuacion !== null && !isNaN(Number(puntuacion))) {
+        const numPuntuacion = Number(puntuacion)
+        if (numPuntuacion < 0) return 0
+        if (numPuntuacion > 5) return 5
+        return numPuntuacion
+      }
+      // Fallback al valor existente de 'rating' si 'puntuacion' no es válido
+      if (val === null || val === undefined || isNaN(Number(val))) return 0
+      if (Number(val) < 0) return 0
+      if (Number(val) > 5) return 5
+      return Number(val)
+    }),
+
+  fecha_scraping: z
+    .string()
+    .datetime()
+    .nullable()
+    .default(new Date().toISOString())
+    .transform((val, ctx) => {
+      const rawData = ctx.parent as Record<string, any>
+      const scrapeadoEn = rawData?.scrapeado_en // Obtener scrapeado_en de la data cruda
+      if (scrapeadoEn && typeof scrapeadoEn === "string") {
+        try {
+          // Intentar parsear como datetime, si falla, retornar el valor original o el default
+          return new Date(scrapeadoEn).toISOString()
+        } catch (e) {
+          console.warn("Formato de fecha 'scrapeado_en' inválido:", scrapeadoEn)
+        }
+      }
+      return val // Retornar el valor original si 'scrapeado_en' no es válido o no está presente
     }),
   imagen_url: z.string().url().nullable().default(null),
   lat: z.number().nullable().default(null),
   lng: z.number().nullable().default(null),
   fuente: z.string().nullable().default("n8n"),
-  fecha_scraping: z.string().datetime().nullable().default(new Date().toISOString()),
 })
 
 export type N8nTelo = z.infer<typeof n8nTeloSchema>
@@ -77,12 +135,12 @@ export type CiudadSearch = z.infer<typeof ciudadSearchSchema>
 
 // Definición de la interfaz Ciudad
 export interface Ciudad {
-  id: string
+  id: number // Cambiado a number para coincidir con la DB
   nombre: string
   slug: string
   provincia?: string
   busquedas?: number
-  total_telos?: number
+  total_telos?: number // Añadido total_telos
   created_at?: Date
 }
 
@@ -104,7 +162,7 @@ export interface Favorito {
   created_at?: Date
 }
 
-// Mock data para fallback y desarrollo
+// Mock data para fallback y desarrollo (mantener si es necesario para desarrollo local)
 export const mockTelos: Telo[] = [
   {
     id: "1",
@@ -112,7 +170,10 @@ export const mockTelos: Telo[] = [
     slug: "hotel-palermo-premium",
     direccion: "Av. Santa Fe 3000",
     ciudad: "Buenos Aires",
-    precio: null, // Precio null para no mostrar precios falsos
+    ciudad_id: 35, // Ejemplo de ciudad_id
+    provincia: "Buenos Aires",
+    pais: "Argentina",
+    precio: null,
     telefono: "011-4555-1234",
     servicios: ["WiFi", "Estacionamiento", "Hidromasaje"],
     descripcion:
@@ -134,7 +195,10 @@ export const mockTelos: Telo[] = [
     slug: "albergue-villa-crespo",
     direccion: "Corrientes 4500",
     ciudad: "Buenos Aires",
-    precio: null, // Precio null para no mostrar precios falsos
+    ciudad_id: 35,
+    provincia: "Buenos Aires",
+    pais: "Argentina",
+    precio: null,
     telefono: "011-4777-5678",
     servicios: ["WiFi", "Aire Acondicionado"],
     descripcion:
@@ -156,7 +220,10 @@ export const mockTelos: Telo[] = [
     slug: "motel-belgrano-deluxe",
     direccion: "Cabildo 2200",
     ciudad: "Buenos Aires",
-    precio: null, // Precio null para no mostrar precios falsos
+    ciudad_id: 35,
+    provincia: "Buenos Aires",
+    pais: "Argentina",
+    precio: null,
     telefono: "011-4888-9012",
     servicios: ["Estacionamiento", "Jacuzzi", "TV Cable"],
     descripcion:
@@ -178,7 +245,10 @@ export const mockTelos: Telo[] = [
     slug: "hotel-cordoba-centro",
     direccion: "San Martín 150",
     ciudad: "Córdoba",
-    precio: null, // Precio null para no mostrar precios falsos
+    ciudad_id: 36,
+    provincia: "Córdoba",
+    pais: "Argentina",
+    precio: null,
     telefono: "0351-422-3456",
     servicios: ["WiFi", "Frigobar"],
     descripcion:
@@ -200,7 +270,10 @@ export const mockTelos: Telo[] = [
     slug: "albergue-rosario",
     direccion: "Pellegrini 1200",
     ciudad: "Rosario",
-    precio: null, // Precio null para no mostrar precios falsos
+    ciudad_id: 37,
+    provincia: "Santa Fe",
+    pais: "Argentina",
+    precio: null,
     telefono: "0341-455-7890",
     servicios: ["WiFi", "Estacionamiento"],
     descripcion:
@@ -222,7 +295,10 @@ export const mockTelos: Telo[] = [
     slug: "motel-mendoza",
     direccion: "Av. San Martín 500",
     ciudad: "Mendoza",
-    precio: null, // Precio null para no mostrar precios falsos
+    ciudad_id: 41,
+    provincia: "Mendoza",
+    pais: "Argentina",
+    precio: null,
     telefono: "0261-123-4567",
     servicios: ["WiFi", "Estacionamiento", "Aire Acondicionado"],
     descripcion:
@@ -242,7 +318,7 @@ export const mockTelos: Telo[] = [
 
 export const mockCiudades = [
   {
-    id: "1",
+    id: 1,
     nombre: "Buenos Aires",
     slug: "buenos-aires",
     provincia: "Buenos Aires",
@@ -250,7 +326,7 @@ export const mockCiudades = [
     total_telos: 45,
   },
   {
-    id: "2",
+    id: 2,
     nombre: "Córdoba",
     slug: "cordoba",
     provincia: "Córdoba",
@@ -258,7 +334,7 @@ export const mockCiudades = [
     total_telos: 23,
   },
   {
-    id: "3",
+    id: 3,
     nombre: "Rosario",
     slug: "rosario",
     provincia: "Santa Fe",
@@ -266,7 +342,7 @@ export const mockCiudades = [
     total_telos: 18,
   },
   {
-    id: "4",
+    id: 4,
     nombre: "Mendoza",
     slug: "mendoza",
     provincia: "Mendoza",
@@ -274,7 +350,7 @@ export const mockCiudades = [
     total_telos: 12,
   },
   {
-    id: "5",
+    id: 5,
     nombre: "La Plata",
     slug: "la-plata",
     provincia: "Buenos Aires",
@@ -282,7 +358,7 @@ export const mockCiudades = [
     total_telos: 8,
   },
   {
-    id: "6",
+    id: 6,
     nombre: "Mar del Plata",
     slug: "mar-del-plata",
     provincia: "Buenos Aires",

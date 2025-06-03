@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useRef } from "react"
 import { MobileHeader } from "@/components/layout/mobile-header"
 import { ResponsiveHeader } from "@/components/layout/responsive-header"
 import { TeloCard } from "@/components/telos/telo-card"
@@ -16,7 +16,6 @@ interface PageProps {
   params: { ciudad: string }
 }
 
-// Función para capitalizar nombres de ciudades
 function capitalizeCityName(slug: string): string {
   return slug
     .split("-")
@@ -31,34 +30,37 @@ export default function CiudadPage({ params }: PageProps) {
   const [telos, setTelos] = useState<Telo[]>([])
   const [loading, setLoading] = useState(true)
   const [searching, setSearching] = useState(false)
+  // Usar un objeto para rastrear si ya se ha realizado la carga inicial para cada ciudad
+  const hasFetchedForCity = useRef<{ [key: string]: boolean }>({})
 
   const ciudadSlug = params.ciudad
   const ciudadName = capitalizeCityName(ciudadSlug)
 
-  // Actualizar título del documento dinámicamente
   useEffect(() => {
     document.title = `Telos en ${ciudadName} | Compará precios y servicios ${new Date().getFullYear()} | Motelo`
   }, [ciudadName])
 
-  const fetchTelosFromDatabase = async () => {
+  const fetchTelosFromDatabase = async (): Promise<Telo[]> => {
     try {
-      console.log(`🔍 Buscando telos para ${ciudadName}...`)
+      console.log(`🔍 [${ciudadName} Page] Buscando telos en la base de datos...`)
       const response = await fetch(`/api/telos?ciudad=${encodeURIComponent(ciudadName)}`)
       if (response.ok) {
         const data = await response.json()
+        console.log(`✅ [${ciudadName} Page] Encontrados ${data.length} telos en DB.`)
         return Array.isArray(data) ? data : []
       }
+      console.log(`⚠️ [${ciudadName} Page] No se encontraron telos en DB.`)
       return []
     } catch (error) {
-      console.error("Error fetching from database:", error)
+      console.error(`❌ [${ciudadName} Page] Error fetching from database:`, error)
       return []
     }
   }
 
-  const searchTelosOnline = async () => {
+  const searchTelosOnline = async (): Promise<Telo[]> => {
     try {
       setSearching(true)
-      console.log(`🔍 Buscando telos en tiempo real para ${ciudadName}...`)
+      console.log(`🔍 [${ciudadName} Page] Iniciando búsqueda en tiempo real (n8n)...`)
       const response = await fetch("/api/n8n/search", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -67,52 +69,71 @@ export default function CiudadPage({ params }: PageProps) {
 
       if (response.ok) {
         const data = await response.json()
+        console.log(`✅ [${ciudadName} Page] Recibidos ${data.telos?.length || 0} telos de n8n.`)
         return Array.isArray(data.telos) ? data.telos : []
       }
+      const errorText = await response.text()
+      console.error(`❌ [${ciudadName} Page] Error en n8n search API (${response.status}): ${errorText}`)
       return []
     } catch (error) {
-      console.error("Error searching online:", error)
+      console.error(`❌ [${ciudadName} Page] Error searching online:`, error)
       return []
     } finally {
       setSearching(false)
     }
   }
 
-  const fetchTelos = async () => {
-    setLoading(true)
+  const fetchAndSetTelos = async () => {
+    // CORREGIDO: Mover la verificación y el marcado del ref al inicio de la función
+    if (hasFetchedForCity.current[ciudadName]) {
+      console.log(
+        `ℹ️ [${ciudadName} Page] fetchAndSetTelos ya se ejecutó para esta ciudad en esta instancia. Evitando re-fetch.`,
+      )
+      return
+    }
+    hasFetchedForCity.current[ciudadName] = true // Marcar que la carga inicial para esta ciudad ha comenzado
 
-    // Primero buscar en base de datos
+    setLoading(true)
+    console.log(`🔄 [${ciudadName} Page] Iniciando proceso de carga de telos...`)
+
+    // 1. Intentar cargar desde la base de datos
     const dbTelos = await fetchTelosFromDatabase()
 
     if (dbTelos.length > 0) {
       setTelos(dbTelos)
+      console.log(`✨ [${ciudadName} Page] Mostrando ${dbTelos.length} telos de la base de datos.`)
     } else {
-      // Si no hay datos en BD, buscar automáticamente online
+      // 2. Si no hay datos en DB, buscar automáticamente online
+      console.log(`🚨 [${ciudadName} Page] No hay telos en DB. Iniciando búsqueda online...`)
       const onlineTelos = await searchTelosOnline()
       if (onlineTelos.length > 0) {
         setTelos(onlineTelos)
+        console.log(`✨ [${ciudadName} Page] Mostrando ${onlineTelos.length} telos de la búsqueda online.`)
       } else {
-        // Usar mock data como último recurso
-        const { mockTelos } = await import("@/lib/models")
-        const filteredMockTelos = Array.isArray(mockTelos)
-          ? mockTelos.filter((t) => t.ciudad.toLowerCase().includes(ciudadName.toLowerCase()))
-          : []
-        setTelos(filteredMockTelos)
+        console.log(`🚫 [${ciudadName} Page] No se encontraron telos para ${ciudadName} ni en DB ni online.`)
+        setTelos([])
       }
     }
     setLoading(false)
+    console.log(`🏁 [${ciudadName} Page] Proceso de carga de telos finalizado.`)
   }
 
   const refreshSearch = async () => {
+    console.log(`🔄 [${ciudadName} Page] Botón 'Actualizar' presionado. Forzando búsqueda online...`)
+    // No usar hasFetchedForCity aquí, ya que es una acción explícita del usuario para refrescar/buscar
     const onlineTelos = await searchTelosOnline()
     if (onlineTelos.length > 0) {
       setTelos(onlineTelos)
+    } else {
+      setTelos([])
     }
   }
 
   useEffect(() => {
-    fetchTelos()
-  }, [ciudadName])
+    // Este useEffect se ejecuta cuando el componente se monta o cuando ciudadName cambia.
+    // La lógica de prevención de doble llamada está ahora dentro de fetchAndSetTelos.
+    fetchAndSetTelos()
+  }, [ciudadName]) // Dependencia de ciudadName para re-fetch si la ciudad cambia
 
   const filteredTelos = Array.isArray(telos)
     ? telos.filter(

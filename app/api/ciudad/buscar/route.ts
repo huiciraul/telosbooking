@@ -10,38 +10,36 @@ import { ciudadSearchSchema } from "@/lib/models"
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json()
-    const { nombre, provincia } = ciudadSearchSchema.parse(body)
+    const { ciudad, provincia } = ciudadSearchSchema.parse(body)
 
-    // Normalizar nombre de ciudad
-    const nombreNormalizado = nombre.trim()
+    const nombreNormalizado = ciudad.trim()
     const slug = generateSlug(nombreNormalizado)
 
-    // Buscar si la ciudad ya existe
-    let ciudad = await executeQuery<any[]>(
+    let ciudadRecord = await executeQuery<any[]>(
       `SELECT * FROM ciudades WHERE LOWER(nombre) = LOWER($1) OR slug = $2 LIMIT 1`,
       [nombreNormalizado, slug],
     )
 
-    if (ciudad.length === 0) {
-      // Crear nueva ciudad si no existe
+    if (ciudadRecord.length === 0) {
       const insertQuery = `
-        INSERT INTO ciudades (nombre, slug, provincia, busquedas) 
-        VALUES ($1, $2, $3, 1)
+        INSERT INTO ciudades (nombre, slug, provincia, busquedas, created_at, updated_at)
+        VALUES ($1, $2, $3, 1, NOW(), NOW())
         RETURNING *
       `
-      ciudad = await executeQuery<any[]>(insertQuery, [nombreNormalizado, slug, provincia || null])
+      ciudadRecord = await executeQuery<any[]>(insertQuery, [nombreNormalizado, slug, provincia || null])
 
       console.log(`✅ Nueva ciudad creada: ${nombreNormalizado}`)
     } else {
-      // Incrementar contador de búsquedas
-      await executeQuery(`UPDATE ciudades SET busquedas = busquedas + 1 WHERE id = $1`, [ciudad[0].id])
+      await executeQuery(`
+        UPDATE ciudades SET busquedas = busquedas + 1, updated_at = NOW() WHERE id = $1
+      `, [ciudadRecord[0].id])
 
-      console.log(`📊 Búsqueda registrada para: ${nombreNormalizado} (total: ${ciudad[0].busquedas + 1})`)
+      console.log(`📊 Búsqueda registrada para: ${nombreNormalizado} (total: ${ciudadRecord[0].busquedas + 1})`)
     }
 
     return NextResponse.json({
       success: true,
-      ciudad: ciudad[0],
+      ciudad: ciudadRecord[0],
       message: `Búsqueda registrada para ${nombreNormalizado}`,
     })
   } catch (error) {

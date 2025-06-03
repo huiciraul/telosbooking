@@ -1,205 +1,167 @@
-import { type NextRequest, NextResponse } from "next/server"
-import { z } from "zod"
+import { NextResponse } from "next/server"
 import { executeQuery } from "@/lib/db"
+import { generateSlug } from "@/utils/generate-slug"
+import { n8nTeloSchema } from "@/lib/models"
 
-const searchSchema = z.object({
-  ciudad: z.string().min(1),
-})
-
-export async function POST(request: NextRequest) {
+export async function POST(req: Request) {
   try {
-    const body = await request.json()
-    const { ciudad } = searchSchema.parse(body)
-
-    console.log(`🔍 Iniciando búsqueda para: ${ciudad}`)
-
-    // URL del webhook de n8n
-    const n8nWebhookUrl = process.env.N8N_WEBHOOK_URL
-    const n8nWebhookToken = process.env.N8N_WEBHOOK_TOKEN
-
-    if (!n8nWebhookUrl) {
-      throw new Error("N8N_WEBHOOK_URL no configurada")
+    const { ciudad } = await req.json()
+    if (!ciudad) {
+      return NextResponse.json({ error: "Ciudad es requerida" }, { status: 400 })
     }
 
-    console.log("📤 Realizando solicitud a n8n webhook:", { ciudad })
+    const slug = generateSlug(ciudad)
 
-    const n8nResponse = await fetch(n8nWebhookUrl, {
+    // Asegurarse que la ciudad exista o crearla
+    const ciudadResult = await executeQuery(`SELECT id FROM ciudades WHERE slug = $1 LIMIT 1`, [slug])
+
+    let ciudadId: number | null = null
+
+    if (ciudadResult.length === 0) {
+      const insertCity = await executeQuery(
+        `INSERT INTO ciudades (nombre, slug, busquedas, created_at, updated_at)
+         VALUES ($1, $2, 1, NOW(), NOW()) RETURNING id`,
+        [ciudad, slug],
+      )
+      ciudadId = insertCity[0].id
+    } else {
+      ciudadId = ciudadResult[0].id
+      await executeQuery(`UPDATE ciudades SET busquedas = busquedas + 1, updated_at = NOW() WHERE id = $1`, [ciudadId])
+    }
+
+    // Llamada al webhook de n8n
+    const webhookUrl = "https://n8ndev.reifdev.com/webhook/buscar-telos-scrapping"
+    console.log(`[n8n/search] Llamando a n8n webhook: ${webhookUrl} para ciudad: ${ciudad}`)
+    const response = await fetch(webhookUrl, {
       method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        ...(n8nWebhookToken ? { Authorization: `Bearer ${n8nWebhookToken}` } : {}),
-      },
+      headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ ciudad }),
     })
 
-    if (!n8nResponse.ok) {
-      const errorText = await n8nResponse.text()
-      console.error(`Error response from n8n webhook: ${n8nResponse.status} - ${errorText}`)
-      throw new Error(`Error en n8n webhook: ${n8nResponse.status}`)
+    if (!response.ok) {
+      const errorDetails = await response.text()
+      console.error(`[n8n/search] Error de n8n webhook (${response.status}): ${errorDetails}`)
+      return NextResponse.json(
+        { error: "Error al buscar telos online", details: errorDetails },
+        { status: response.status },
+      )
     }
 
-    const rawTelosData = await n8nResponse.json()
-    console.log(`📥 Recibidos ${rawTelosData.length} telos de n8n`)
+    const data = await response.json()
+    const telosFromN8n = Array.isArray(data[0]?.telos) ? data[0].telos : []
+    console.log(`[n8n/search] Recibidos ${telosFromN8n.length} telos de n8n.`)
 
-    const results = {
-      insertados: 0,
-      actualizados: 0,
-      descartados: 0,
-      errores: 0,
-    }
+    const stats = { insertados: 0, actualizados: 0, errores: 0 }
 
-    for (const [index, teloData] of rawTelosData.entries()) {
-      try {
-        // Validar datos mínimos
-        if (!teloData.nombre || !teloData.direccion) {
-          console.log("⚠️ Telo sin datos mínimos:", teloData.nombre)
-          results.descartados++
-          continue
-        }
+    for (const raw of telosFromN8n) {
+      const parsed = n8nTeloSchema.safeParse(raw)
+      if (!parsed.success) {
+        stats.errores++
+        console.error("[n8n/search] Error de validación Zod:", parsed.error.errors, "Datos raw:", raw)
+        continue
+      }
 
-        // Procesar servicios de manera segura
-        let servicios = ["WiFi"] // Default
-        if (teloData.servicios && Array.isArray(teloData.servicios) && teloData.servicios.length > 0) {
-          servicios = teloData.servicios.filter((s) => s && typeof s === "string" && s.trim().length > 0)
-        }
-        if (servicios.length === 0) {
-          servicios = ["WiFi"]
-        }
+      const telo = parsed.data
+      telo.ciudad = telo.ciudad || ciudad
+      telo.ciudad_id = ciudadId
 
-        // Limpiar y validar datos
-        const cleanData = {
-          nombre: String(teloData.nombre).trim(),
-          slug: generateSlug(teloData.nombre),
-          direccion: String(teloData.direccion).trim(),
-          ciudad: String(teloData.ciudad || ciudad).trim(),
-          telefono: (teloData.telefono && String(teloData.telefono).trim()) || null,
-          precio: null, // SIEMPRE NULL
-          servicios: servicios,
-          descripcion:
-            teloData.descripcion && String(teloData.descripcion).trim() !== "lodging, point_of_interest, establishment"
-              ? String(teloData.descripcion).trim()
-              : null,
-          rating:
-            teloData.rating && typeof teloData.rating === "number" && teloData.rating > 0
-              ? Math.min(Math.max(teloData.rating, 0), 5)
-              : null,
-          imagen_url:
-            teloData.imagen_url && String(teloData.imagen_url).trim() !== ""
-              ? String(teloData.imagen_url).trim()
-              : null,
-          lat: teloData.lat && typeof teloData.lat === "number" ? Number(teloData.lat) : null,
-          lng: teloData.lng && typeof teloData.lng === "number" ? Number(teloData.lng) : null,
-          fuente: "n8n-search",
-          activo: true,
-        }
+      const exists = await executeQuery(
+        `SELECT id FROM telos WHERE LOWER(nombre) = LOWER($1) AND LOWER(direccion) = LOWER($2) LIMIT 1`,
+        [telo.nombre, telo.direccion],
+      )
 
-        console.log(`💾 Procesando telo: ${cleanData.nombre}`)
-
-        // Verificar si existe
-        const existingQuery = `
-          SELECT id FROM telos 
-          WHERE LOWER(TRIM(nombre)) = LOWER(TRIM('${cleanData.nombre.replace(/'/g, "''")}'))
-            AND LOWER(TRIM(direccion)) = LOWER(TRIM('${cleanData.direccion.replace(/'/g, "''")}'))
-          LIMIT 1
-        `
-
-        const existing = await executeQuery(existingQuery)
-
-        if (existing.length > 0) {
-          // Actualizar sin tocar el precio
-          const updateQuery = `
-            UPDATE telos SET
-              updated_at = NOW(),
-              fuente = '${cleanData.fuente}',
-              servicios = '${JSON.stringify(cleanData.servicios)}',
-              imagen_url = COALESCE(${cleanData.imagen_url ? `'${cleanData.imagen_url.replace(/'/g, "''")}'` : "NULL"}, imagen_url),
-              lat = COALESCE(${cleanData.lat}, lat),
-              lng = COALESCE(${cleanData.lng}, lng),
-              rating = COALESCE(${cleanData.rating}, rating)
-            WHERE id = '${existing[0].id}'
-          `
-
-          await executeQuery(updateQuery)
-          results.actualizados++
-        } else {
-          // Insertar nuevo telo
-          const insertQuery = `
-            INSERT INTO telos (
-              nombre, slug, direccion, ciudad, telefono, precio, servicios, 
-              descripcion, rating, imagen_url, lat, lng, fuente, activo, 
-              created_at, updated_at
-            ) VALUES (
-              '${cleanData.nombre.replace(/'/g, "''")}', 
-              '${cleanData.slug}', 
-              '${cleanData.direccion.replace(/'/g, "''")}', 
-              '${cleanData.ciudad.replace(/'/g, "''")}', 
-              ${cleanData.telefono ? `'${cleanData.telefono.replace(/'/g, "''")}'` : "NULL"}, 
-              NULL, 
-              '${JSON.stringify(cleanData.servicios)}', 
-              ${cleanData.descripcion ? `'${cleanData.descripcion.replace(/'/g, "''")}'` : "NULL"}, 
-              ${cleanData.rating}, 
-              ${cleanData.imagen_url ? `'${cleanData.imagen_url.replace(/'/g, "''")}'` : "NULL"}, 
-              ${cleanData.lat}, 
-              ${cleanData.lng}, 
-              '${cleanData.fuente}', 
-              ${cleanData.activo}, 
-              NOW(), 
-              NOW()
-            )
-          `
-
-          await executeQuery(insertQuery)
-          results.insertados++
-        }
-      } catch (error) {
-        console.error(`❌ Error procesando telo ${index + 1}:`, error)
-        console.error(`Datos del telo:`, JSON.stringify(teloData, null, 2))
-        results.errores++
+      if (exists.length > 0) {
+        console.log(`[n8n/search] Actualizando telo existente: ${telo.nombre}`)
+        await executeQuery(
+          `UPDATE telos SET
+            updated_at = NOW(),
+            fuente = $1,
+            servicios = $2,
+            imagen_url = COALESCE($3, imagen_url),
+            lat = COALESCE($4, lat),
+            lng = COALESCE($5, lng),
+            rating = COALESCE($6, rating),
+            provincia = $7,
+            pais = $8,
+            telefono = $9,
+            descripcion = $10,
+            fecha_scraping = $11,
+            ciudad_id = $12
+           WHERE id = $13`,
+          [
+            telo.fuente,
+            telo.servicios, // CORREGIDO: Pasar array directamente
+            telo.imagen_url,
+            telo.lat,
+            telo.lng,
+            telo.rating,
+            telo.provincia,
+            telo.pais,
+            telo.telefono,
+            telo.descripcion,
+            telo.fecha_scraping,
+            ciudadId,
+            exists[0].id,
+          ],
+        )
+        stats.actualizados++
+      } else {
+        console.log(`[n8n/search] Insertando nuevo telo: ${telo.nombre}`)
+        await executeQuery(
+          `INSERT INTO telos (nombre, slug, direccion, ciudad, ciudad_id, provincia, pais, telefono, precio,
+           servicios, descripcion, rating, imagen_url, lat, lng, fuente, activo, created_at, updated_at, fecha_scraping)
+           VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10,
+                   $11, $12, $13, $14, $15, $16, true, NOW(), NOW(), $17)`,
+          [
+            telo.nombre,
+            telo.slug,
+            telo.direccion,
+            telo.ciudad,
+            ciudadId,
+            telo.provincia,
+            telo.pais,
+            telo.telefono,
+            telo.precio,
+            telo.servicios, // CORREGIDO: Pasar array directamente
+            telo.descripcion,
+            telo.rating,
+            telo.imagen_url,
+            telo.lat,
+            telo.lng,
+            telo.fuente,
+            telo.fecha_scraping,
+          ],
+        )
+        stats.insertados++
+        await executeQuery(
+          `UPDATE ciudades SET total_telos = COALESCE(total_telos, 0) + 1, updated_at = NOW() WHERE id = $1`,
+          [ciudadId],
+        )
       }
     }
 
-    console.log(
-      `✅ Búsqueda completada: ${results.insertados} insertados, ${results.actualizados} actualizados, ${results.errores} errores`,
+    const finalTelos = await executeQuery(
+      `SELECT * FROM telos WHERE ciudad ILIKE $1 AND activo = true ORDER BY created_at DESC LIMIT 50`,
+      [`%${ciudad}%`],
     )
 
-    // Obtener los telos para devolver
-    const finalTelosQuery = `
-      SELECT * FROM telos 
-      WHERE ciudad ILIKE '%${ciudad}%' 
-        AND activo = true 
-      ORDER BY created_at DESC 
-      LIMIT 50
-    `
-
-    const finalTelos = await executeQuery(finalTelosQuery)
-
+    console.log(`[n8n/search] Búsqueda completada para ${ciudad}. Stats: ${JSON.stringify(stats)}`)
     return NextResponse.json({
       success: true,
       message: "Búsqueda completada",
       telos: finalTelos,
-      stats: results,
+      stats,
       timestamp: new Date().toISOString(),
     })
   } catch (error: any) {
-    console.error("❌ Error en búsqueda:", error)
+    console.error("[n8n/search] Error interno del servidor:", error)
     return NextResponse.json(
       {
-        error: "Error en búsqueda",
+        error: "Error interno del servidor",
         details: error instanceof Error ? error.message : String(error),
         telos: [],
       },
       { status: 500 },
     )
   }
-}
-
-function generateSlug(nombre: string): string {
-  return nombre
-    .toLowerCase()
-    .normalize("NFD")
-    .replace(/[\u0300-\u036f]/g, "")
-    .replace(/[^a-z0-9\s-]/g, "")
-    .replace(/\s+/g, "-")
-    .replace(/-+/g, "-")
-    .trim()
 }
