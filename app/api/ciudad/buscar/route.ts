@@ -47,13 +47,3 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "Error interno del servidor" }, { status: 500 })
   }
 }
-
-// Ejemplo de cómo debería ser la llamada a la API desde el cliente
-await fetch("/api/ciudad/buscar", {
-  method: "POST",
-  headers: { "Content-Type": "application/json" },
-  body: JSON.stringify({
-    ciudad: cityName, // <-- debe ser 'ciudad'
-    provincia: provinceName,
-  }),
-})

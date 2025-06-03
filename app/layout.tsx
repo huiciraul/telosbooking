@@ -2,6 +2,7 @@ import type React from "react"
 import type { Metadata } from "next"
 import { Inter, Poppins } from "next/font/google"
 import "./globals.css"
+import Script from "next/script"
 
 const inter = Inter({ subsets: ["latin"] })
 const poppins = Poppins({
@@ -64,17 +65,18 @@ export default function RootLayout({
           crossOrigin="anonymous"
         />
         {/* Google Analytics */}
-        <script async src="https://www.googletagmanager.com/gtag/js?id=G-52EMK485TC" />
-        <script
-          dangerouslySetInnerHTML={{
-            __html: `
-      window.dataLayer = window.dataLayer || [];
-      function gtag(){dataLayer.push(arguments);}
-      gtag('js', new Date());
-      gtag('config', 'G-52EMK485TC');
-    `,
-          }}
+        <Script
+          src="https://www.googletagmanager.com/gtag/js?id=G-52EMK485TC"
+          strategy="afterInteractive"
         />
+        <Script id="gtag-init" strategy="afterInteractive">
+          {`
+            window.dataLayer = window.dataLayer || [];
+            function gtag(){dataLayer.push(arguments);}
+            gtag('js', new Date());
+            gtag('config', 'G-52EMK485TC');
+          `}
+        </Script>
       </head>
       <body className={`${inter.className} bg-background text-foreground`}>{children}</body>
     </html>

@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect, useRef } from "react"
+import { useState, useEffect, useRef, use } from "react"
 import { MobileHeader } from "@/components/layout/mobile-header"
 import { ResponsiveHeader } from "@/components/layout/responsive-header"
 import { TeloCard } from "@/components/telos/telo-card"
@@ -24,17 +24,17 @@ function capitalizeCityName(slug: string): string {
 }
 
 export default function CiudadPage({ params }: PageProps) {
+  const { ciudad } = use(params)
+  const ciudadSlug = ciudad
+  const ciudadName = capitalizeCityName(ciudadSlug)
+
   const [viewMode, setViewMode] = useState<"list" | "map">("list")
   const [searchTerm, setSearchTerm] = useState("")
   const [showFilters, setShowFilters] = useState(false)
   const [telos, setTelos] = useState<Telo[]>([])
   const [loading, setLoading] = useState(true)
   const [searching, setSearching] = useState(false)
-  // Usar un objeto para rastrear si ya se ha realizado la carga inicial para cada ciudad
   const hasFetchedForCity = useRef<{ [key: string]: boolean }>({})
-
-  const ciudadSlug = params.ciudad
-  const ciudadName = capitalizeCityName(ciudadSlug)
 
   useEffect(() => {
     document.title = `Telos en ${ciudadName} | Compará precios y servicios ${new Date().getFullYear()} | Motelo`
@@ -69,28 +69,37 @@ export default function CiudadPage({ params }: PageProps) {
 
       if (response.ok) {
         const data = await response.json()
-        console.log(`✅ [${ciudadName} Page] Recibidos ${data.telos?.length || 0} telos de n8n.`)
-        return Array.isArray(data.telos) ? data.telos : []
+        const telosFromN8n = Array.isArray(data.telos) ? data.telos : []
+        console.log(`✅ [${ciudadName} Page] Recibidos ${telosFromN8n.length} telos de n8n.`)
+
+        // Si el webhook no devuelve resultados, intentar obtenerlos de la base de datos por si el scraping los insertó correctamente
+        if (telosFromN8n.length === 0) {
+          try {
+            const dbResponse = await fetch(`/api/telos?ciudad=${encodeURIComponent(ciudadName)}`)
+            if (dbResponse.ok) {
+              const dbData = await dbResponse.json()
+              console.log(`✅ [${ciudadName} Page] Telos actualizados desde DB: ${dbData.length}`)
+              setSearching(false)
+              return Array.isArray(dbData) ? dbData : []
+            }
+          } catch (err) {
+            console.error(`❌ [${ciudadName} Page] Error re-fetching from DB:`, err)
+          }
+        }
+        setSearching(false)
+        return telosFromN8n
       }
-      const errorText = await response.text()
-      console.error(`❌ [${ciudadName} Page] Error en n8n search API (${response.status}): ${errorText}`)
-      return []
-    } catch (error) {
-      console.error(`❌ [${ciudadName} Page] Error searching online:`, error)
-      return []
-    } finally {
       setSearching(false)
+      return []
+    } catch (err) {
+      setSearching(false)
+      console.error(`❌ [${ciudadName} Page] Error en búsqueda online:`, err)
+      return []
     }
   }
 
   const fetchAndSetTelos = async () => {
-    // CORREGIDO: Mover la verificación y el marcado del ref al inicio de la función
-    if (hasFetchedForCity.current[ciudadName]) {
-      console.log(
-        `ℹ️ [${ciudadName} Page] fetchAndSetTelos ya se ejecutó para esta ciudad en esta instancia. Evitando re-fetch.`,
-      )
-      return
-    }
+    if (hasFetchedForCity.current[ciudadName]) return
     hasFetchedForCity.current[ciudadName] = true // Marcar que la carga inicial para esta ciudad ha comenzado
 
     setLoading(true)
@@ -121,19 +130,20 @@ export default function CiudadPage({ params }: PageProps) {
   const refreshSearch = async () => {
     console.log(`🔄 [${ciudadName} Page] Botón 'Actualizar' presionado. Forzando búsqueda online...`)
     // No usar hasFetchedForCity aquí, ya que es una acción explícita del usuario para refrescar/buscar
+    setSearching(true)
     const onlineTelos = await searchTelosOnline()
     if (onlineTelos.length > 0) {
       setTelos(onlineTelos)
     } else {
       setTelos([])
     }
+    setSearching(false)
   }
 
   useEffect(() => {
-    // Este useEffect se ejecuta cuando el componente se monta o cuando ciudadName cambia.
-    // La lógica de prevención de doble llamada está ahora dentro de fetchAndSetTelos.
     fetchAndSetTelos()
-  }, [ciudadName]) // Dependencia de ciudadName para re-fetch si la ciudad cambia
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [ciudadName])
 
   const filteredTelos = Array.isArray(telos)
     ? telos.filter(
