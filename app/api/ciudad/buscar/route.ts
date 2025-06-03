@@ -48,7 +48,8 @@ export async function POST(request: NextRequest) {
   }
 }
 
-// Ejemplo de cómo debería ser la llamada a la API desde el cliente
+// Ejemplo de cómo debería ser la llamada a la API desde el cliente:
+/*
 await fetch("/api/ciudad/buscar", {
   method: "POST",
   headers: { "Content-Type": "application/json" },
@@ -57,3 +58,4 @@ await fetch("/api/ciudad/buscar", {
     provincia: provinceName,
   }),
 })
+*/
