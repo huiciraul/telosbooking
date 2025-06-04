@@ -47,11 +47,29 @@ export async function POST(req: Request) {
       )
     }
 
-    const data = await response.json()
-    const telosFromN8n =
-      Array.isArray(data?.telos) ? data.telos :
-      Array.isArray(data) && Array.isArray(data[0]?.telos) ? data[0].telos :
-      []
+    const responseText = await response.text()
+    let data: any = {}
+    if (responseText.trim()) {
+      try {
+        data = JSON.parse(responseText)
+      } catch (err) {
+        console.error("[n8n/search] Error parseando JSON de n8n:", err, "Body:", responseText)
+        return NextResponse.json(
+          { error: "Respuesta inválida de n8n", details: responseText },
+          { status: 502 },
+        )
+      }
+    } else {
+      console.warn("[n8n/search] Respuesta vacía de n8n")
+      data = {}
+    }
+
+    const telosFromN8n = Array.isArray(data)
+      ? data.flatMap((item) => Array.isArray(item.telos) ? item.telos : [])
+      : Array.isArray(data?.telos)
+        ? data.telos
+        : []
+
     console.log(`[n8n/search] Recibidos ${telosFromN8n.length} telos de n8n.`)
 
     const stats = { insertados: 0, actualizados: 0, errores: 0 }
